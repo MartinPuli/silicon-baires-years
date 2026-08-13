@@ -188,6 +188,48 @@ def freeze_camera(scene, report, subjects):
     return cam
 
 
+def hitos_de(info):
+    """`hito` puede venir como texto o como lista. Devuelve siempre lista."""
+    hito = info.get("hito")
+    if not hito:
+        return []
+    return [hito] if isinstance(hito, str) else list(hito)
+
+
+def hito_year(text):
+    head = text.split(":", 1)[0].strip()
+    return int(head) if head.isdigit() else None
+
+
+# Que fraccion de su altura tiene el edificio el dia que la empresa se funda.
+# El resto lo gana creciendo.
+SEED_HEIGHT = 0.42
+# Si la empresa no tiene hitos con fecha, tarda esto en llegar a su altura.
+DEFAULT_GROWTH_YEARS = 7
+
+
+def growth_steps(founded, info):
+    """Los escalones de altura del edificio, de la fundacion a su tamano final.
+
+    El edificio NO aparece entero: nace chico y va subiendo. Los escalones caen
+    en los hitos con fecha de la empresa (salidas a bolsa, rondas, compras),
+    que es lo unico documentado que tenemos para las veintidos por igual. NO es
+    una curva de valuacion: no hay valuaciones comparables para todas, y
+    fabricar uma seria inventar el dato.
+
+    Sin hitos, el edificio crece parejo durante DEFAULT_GROWTH_YEARS.
+    """
+    years = sorted({y for y in (hito_year(h) for h in hitos_de(info))
+                    if y and y > founded})
+    if not years:
+        years = [founded + DEFAULT_GROWTH_YEARS]
+    span = 1.0 - SEED_HEIGHT
+    steps = [(founded, SEED_HEIGHT)]
+    for index, year in enumerate(years, start=1):
+        steps.append((year, SEED_HEIGHT + span * index / len(years)))
+    return steps
+
+
 def site_index(root):
     """Los 126 sitios de upstream, indexados por su coordenada.
 
@@ -355,12 +397,16 @@ def animate_signs(root, scene, report, collection):
 
         if part is not None:
             built += 1
+            steps = growth_steps(year, info)
             set_key_interpolation("BEZIER")
             part.scale = (1.0, 1.0, 0.001)
             part.keyframe_insert("scale", index=2, frame=1)
             part.keyframe_insert("scale", index=2, frame=frame_in)
-            part.scale = (1.0, 1.0, 1.0)
-            part.keyframe_insert("scale", index=2, frame=frame_in + grow)
+            for step_year, height in steps:
+                part.scale = (1.0, 1.0, height)
+                part.keyframe_insert(
+                    "scale", index=2,
+                    frame=year_to_frame(step_year) + grow)
             if frame_end:
                 part.keyframe_insert("scale", index=2, frame=frame_end)
                 part.scale = (1.0, 1.0, 0.001)
@@ -441,13 +487,12 @@ def build_hud(cam, scene, by_year, end_by_year, table, collection, report):
     # 2026 y aparecia debajo de un cartel que decia 2017.
     hitos = {}
     for brand, info in table.items():
-        hito = info.get("hito")
-        if not hito or ":" not in hito:
-            continue
-        head, tail = hito.split(":", 1)
-        if head.strip().isdigit():
-            hitos.setdefault(int(head.strip()), []).append(
-                "%s  -  %s" % (brand, tail.strip()))
+        for hito in hitos_de(info):
+            year = hito_year(hito)
+            if year is None:
+                continue
+            hitos.setdefault(year, []).append(
+                "%s  -  %s" % (brand, hito.split(":", 1)[1].strip()))
 
     for year in range(YEAR_START, YEAR_END + 1):
         frame_in = year_to_frame(year)

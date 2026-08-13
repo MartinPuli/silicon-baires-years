@@ -11,10 +11,8 @@
       "year": 1995,
       "confidence": "reported",
       "sources": ["https://www.cbinsights.com/company/technisys", "https://defonline.com.ar/ciencia-tecnologia/unicornios-argentinos-technisys-una-oferta-de-banca-digital-adelantada-a-los-tiempos/"],
-      "end_year": 2022,
-      "end_reason": "la compra SoFi por US$1.100 M",
-      "end_confidence": "confirmed",
-      "end_sources": ["https://www.lanacion.com.ar/economia/la-fintech-technisys-fue-adquirida-por-us1100-millones-nid22022022/", "https://www.forbesargentina.com/negocios/technisys-fintech-argentina-fue-vendida-us-1100-millones-estadounidense-sofi-technologies-n12963"]
+      "hito": "2022: la compra SoFi por US$1.100 M",
+      "hito_sources": ["https://www.lanacion.com.ar/economia/la-fintech-technisys-fue-adquirida-por-us1100-millones-nid22022022/", "https://www.forbesargentina.com/negocios/technisys-fintech-argentina-fue-vendida-us-1100-millones-estadounidense-sofi-technologies-n12963"]
     },
     "MERCADO LIBRE": {
       "year": 1999,
@@ -26,11 +24,7 @@
       "year": 1999,
       "confidence": "confirmed",
       "sources": ["https://en.wikipedia.org/wiki/Despegar"],
-      "hito": "2017: sale a la NYSE",
-      "end_year": 2025,
-      "end_reason": "la compra Prosus por ~US$1.700 M",
-      "end_confidence": "confirmed",
-      "end_sources": ["https://en.wikipedia.org/wiki/Despegar"]
+      "hito": ["2017: sale a la NYSE", "2025: la compra Prosus por ~US$1.700 M"]
     },
     "BIOCERES": {
       "year": 2001,
@@ -53,10 +47,7 @@
       "year": 2006,
       "confidence": "confirmed",
       "sources": ["https://en.wikipedia.org/wiki/OLX"],
-      "end_year": 2010,
-      "end_reason": "Naspers toma el control",
-      "end_confidence": "confirmed",
-      "end_sources": ["https://en.wikipedia.org/wiki/OLX"]
+      "hito": ["2010: Naspers toma el control", "2014: Naspers llega al 95%"]
     },
     "ETERMAX": {
       "year": 2009,
@@ -91,10 +82,7 @@
       "year": 2013,
       "confidence": "confirmed",
       "sources": ["https://auth0.com/blog/okta-acquisition-announcement/"],
-      "end_year": 2021,
-      "end_reason": "la compra Okta por US$6.500 M",
-      "end_confidence": "confirmed",
-      "end_sources": ["https://auth0.com/blog/okta-acquisition-announcement/"]
+      "hito": "2021: la compra Okta por US$6.500 M"
     },
     "RIPIO": {
       "year": 2013,
