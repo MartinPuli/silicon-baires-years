@@ -437,6 +437,109 @@ def build_title_progressively(collection_name, report):
     report["titulo_letras"] = len(letters)
 
 
+def animate_landmarks(root, collection, by_year, report):
+    """Separa piezas del objeto 'landmarks' y les pone su año.
+
+    upstream funde el Obelisco, la Floralis, el estadio y varios props en un
+    solo objeto. Se separa por radio alrededor de un punto medido con raycast,
+    con la misma tecnica de bmesh que los edificios.
+    """
+    import bmesh
+
+    path = os.path.join(root, "data", "landmarks.json")
+    landmarks = bpy.data.objects.get("landmarks")
+    if not os.path.exists(path) or landmarks is None:
+        return
+    with open(path, encoding="utf-8") as fh:
+        piezas = json.load(fh)["piezas"]
+
+    bm = bmesh.new()
+    bm.from_mesh(landmarks.data)
+    bm.faces.ensure_lookup_table()
+
+    claimed = {}
+    for face in bm.faces:
+        center = face.calc_center_median()
+        for pieza in piezas:
+            at = pieza["at"]
+            if math.hypot(center.x - at[0], center.y - at[1]) <= pieza["radius"]:
+                claimed.setdefault(pieza["id"], []).append(face)
+                break
+
+    grow = int(FRAMES_PER_YEAR * 0.7)
+    hechas = []
+    materials = list(landmarks.data.materials)
+    for pieza in piezas:
+        faces = claimed.get(pieza["id"])
+        if not faces or len(faces) < 4:
+            report["warnings"].append(
+                "sin geometria para el landmark %s en (%s)"
+                % (pieza["name"], pieza["at"]))
+            continue
+
+        base = Vector((pieza["at"][0], pieza["at"][1], 0.0))
+        part_bm = bmesh.new()
+        vmap = {}
+        for face in faces:
+            verts = []
+            for vert in face.verts:
+                if vert not in vmap:
+                    vmap[vert] = part_bm.verts.new(vert.co - base)
+                verts.append(vmap[vert])
+            try:
+                new_face = part_bm.faces.new(verts)
+            except ValueError:
+                continue
+            new_face.material_index = face.material_index
+            new_face.smooth = face.smooth
+        mesh = bpy.data.meshes.new(TAG + "lm_" + pieza["id"])
+        part_bm.to_mesh(mesh)
+        part_bm.free()
+        for material in materials:
+            mesh.materials.append(material)
+        part = bpy.data.objects.new(TAG + "lm_" + pieza["id"], mesh)
+        part.location = base
+        collection.objects.link(part)
+
+        set_key_interpolation("BEZIER")
+        appears = pieza.get("appears")
+        obras = pieza.get("obras") or []
+        if appears:
+            # Se construye en su ano, como cualquier edificio.
+            frame_in = year_to_frame(int(appears))
+            part.scale = (1.0, 1.0, 0.001)
+            part.keyframe_insert("scale", index=2, frame=1)
+            part.keyframe_insert("scale", index=2, frame=frame_in)
+            part.scale = (1.0, 1.0, 1.0)
+            part.keyframe_insert("scale", index=2, frame=frame_in + grow)
+            by_year.setdefault(int(appears), set()).add(pieza["name"])
+        elif obras:
+            # Ya estaba: lo que se anima son las obras. Cada una lo agranda un
+            # escalon, que es lo que las obras hicieron con la capacidad.
+            part.scale = (1.0, 1.0, 1.0)
+            part.keyframe_insert("scale", index=2, frame=1)
+            for index, obra in enumerate(obras, start=1):
+                frame = year_to_frame(int(obra["year"]))
+                part.keyframe_insert("scale", index=2, frame=frame)
+                part.scale = (1.0, 1.0, 1.0 + 0.16 * index)
+                part.keyframe_insert("scale", index=2, frame=frame + grow)
+
+        hechas.append({
+            "pieza": pieza["name"],
+            "appears": appears,
+            "obras": [o["year"] for o in obras],
+            "caras": len(faces),
+        })
+
+    bmesh.ops.delete(
+        bm, geom=[f for group in claimed.values() for f in group],
+        context="FACES")
+    bm.to_mesh(landmarks.data)
+    bm.free()
+    landmarks.data.update()
+    report["landmarks"] = hechas
+
+
 def plan_closed(root, sites, targets, report):
     """Le busca terreno a las empresas que cerraron.
 
@@ -636,6 +739,7 @@ def animate_signs(root, scene, report, collection):
                   for _, s in targets}
     if city is not None:
         animate_city_fabric(city, sites, claimed_at, collection, report)
+    animate_landmarks(root, collection, by_year, report)
     thin_early_life("TRAFFIC", 0.12, "transito", report)
     thin_early_life("PEOPLE", 0.10, "gente", report)
     build_title_progressively("TITLE", report)
@@ -758,6 +862,18 @@ def main():
 
     hud_coll = bpy.data.collections.new(TAG + "HUD")
     scene.collection.children.link(hud_coll)
+    # Las obras de los landmarks entran al HUD por la misma puerta que los
+    # hitos de las empresas, que ya sabe leer "ANO: texto".
+    lm_path = os.path.join(root, "data", "landmarks.json")
+    if os.path.exists(lm_path):
+        with open(lm_path, encoding="utf-8") as fh:
+            for pieza in json.load(fh)["piezas"]:
+                obras = pieza.get("obras") or []
+                if obras:
+                    table[pieza["name"]] = {
+                        "hito": ["%d: %s" % (int(o["year"]), o["texto"])
+                                 for o in obras]}
+
     build_hud(cam, scene, by_year, end_by_year, table, hud_coll, report)
 
     out_dir = os.path.join(root, "scene_city")

@@ -47,6 +47,23 @@
   ],
   "tejido_animado": 94,
   "tejido_nota": "Puesta en escena, no dato: los edificios que no son de ninguna empresa se reparten a lo largo del periodo con un sesgo hacia los anos tardios, para que la ciudad arranque casi vacia. El reparto es determinista, asi que siempre se construye en el mismo orden.",
+  "landmarks": [
+    {
+      "pieza": "BOTR",
+      "appears": 2026,
+      "obras": [],
+      "caras": 986
+    },
+    {
+      "pieza": "EL MONUMENTAL",
+      "appears": null,
+      "obras": [
+        2020,
+        2026
+      ],
+      "caras": 6530
+    }
+  ],
   "transito": {
     "total": 1972,
     "escalonados": 1762,
