@@ -1,0 +1,15 @@
+# upstream es el repo de Aerolab. No se vendoriza: lo trae
+# scripts/fetch_upstream.sh fijado a un commit.
+upstream/
+
+# Los fotogramas de la animacion pesan mas de 1 GB y salen del .blend
+renders/frames/
+renders/frames_city/
+
+# El .blend con la capa de tiempo se regenera con scripts/timeline_layer.py
+scene_city/*.blend
+scene_city/*.blend1
+
+__pycache__/
+*.pyc
+.DS_Store

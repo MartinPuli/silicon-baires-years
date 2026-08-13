@@ -1,0 +1,250 @@
+{
+  "upstream": "https://github.com/Aerolab/silicon-baires",
+  "upstream_commit": "963da3133d7cfd7cc30239cb57dca2696067d242",
+  "year_start": 1995,
+  "year_end": 2026,
+  "frames_per_year": 19,
+  "fps": 24,
+  "warnings": [
+    "5 entradas del manifiesto no tienen objeto en el .blend"
+  ],
+  "frame_end": 608,
+  "signs_animated": [
+    {
+      "sign": "Sign.000",
+      "brand": "GLOBANT",
+      "year": 2003,
+      "frame_in": 153,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.001",
+      "brand": "VERCEL",
+      "year": 2015,
+      "frame_in": 381,
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.002",
+      "brand": "MERCADO LIBRE",
+      "year": 1999,
+      "frame_in": 77,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.004",
+      "brand": "UALA",
+      "year": 2017,
+      "frame_in": 419,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.005",
+      "brand": "AUTH0",
+      "year": 2013,
+      "frame_in": 343,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.006",
+      "brand": "SATELLOGIC",
+      "year": 2010,
+      "frame_in": 286,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.007",
+      "brand": "DESPEGAR",
+      "year": 1999,
+      "frame_in": 77,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.009",
+      "brand": "POMELO",
+      "year": 2021,
+      "frame_in": 495,
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.010",
+      "brand": "TECHNISYS",
+      "year": 1995,
+      "frame_in": 1,
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.011",
+      "brand": "ALEPH",
+      "year": 2005,
+      "frame_in": 191,
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.018",
+      "brand": "TIENDANUBE",
+      "year": 2011,
+      "frame_in": 305,
+      "confidence": "conflicting_sources"
+    },
+    {
+      "sign": "Sign.020",
+      "brand": "AEROLAB",
+      "year": 2012,
+      "frame_in": 324,
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.021",
+      "brand": "BIOCERES",
+      "year": 2001,
+      "frame_in": 115,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.022",
+      "brand": "OLX",
+      "year": 2006,
+      "frame_in": 210,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.023",
+      "brand": "LEMON",
+      "year": 2019,
+      "frame_in": 457,
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.057",
+      "brand": "MURAL",
+      "year": 2011,
+      "frame_in": 305,
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.058",
+      "brand": "ETERMAX",
+      "year": 2009,
+      "frame_in": 267,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.059",
+      "brand": "DIGITAL HOUSE",
+      "year": 2016,
+      "frame_in": 400,
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.061",
+      "brand": "BRUBANK",
+      "year": 2017,
+      "frame_in": 419,
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.069",
+      "brand": "RIPIO",
+      "year": 2013,
+      "frame_in": 343,
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.070",
+      "brand": "OLX",
+      "year": 2006,
+      "frame_in": 210,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.097",
+      "brand": "CODERHOUSE",
+      "year": 2014,
+      "frame_in": 362,
+      "confidence": "reported"
+    }
+  ],
+  "signs_sin_ano": [
+    "ANDA",
+    "ARROYO",
+    "AUSTRAL",
+    "BASEMENT",
+    "BELO",
+    "BERRY",
+    "CARDON",
+    "CEIBO",
+    "COCOS",
+    "COMPLIF",
+    "CUARZO",
+    "DECENTRALAND",
+    "FARO",
+    "FERNET",
+    "GALICIA",
+    "HUMAND",
+    "KETZAL",
+    "LINCE",
+    "LUMA",
+    "MASLOW",
+    "MATE",
+    "MERCADO PAGO",
+    "MODO",
+    "NARANJA X",
+    "NODO",
+    "NUBE",
+    "OMBU",
+    "OPENZEPPELIN",
+    "PAISANOS",
+    "PAMPA",
+    "PATMOS",
+    "PILAR",
+    "PUERTO",
+    "QUILME",
+    "RAMBLA",
+    "REBILL",
+    "REVAMOS",
+    "RIACHO",
+    "SALTO",
+    "SEIBO",
+    "SLA",
+    "SUR",
+    "TAKENOS",
+    "TALA",
+    "TANGO",
+    "TIMBO",
+    "TRAMA",
+    "VELA",
+    "VELOX",
+    "YERBA",
+    "ZONDA"
+  ],
+  "objetos_del_manifiesto_ausentes": [
+    "Sign.013",
+    "Sign.053",
+    "Sign.054",
+    "Sign.055",
+    "Sign.056"
+  ],
+  "camera": {
+    "congelada_en_frame": 1,
+    "location": [
+      954.1,
+      768.0,
+      727.8
+    ],
+    "rotation_deg": [
+      59.4,
+      -0.0,
+      135.0
+    ],
+    "ortho_scale": 620.0,
+    "ciudad_ancho_m": 529.4,
+    "ciudad_alto_m": 182.0,
+    "keyframes": 0,
+    "nota": "Se limpio la animacion del objeto Y la del dato de camara (upstream anima ortho_scale de 306 a 170)."
+  },
+  "hud": {
+    "anos": 32,
+    "titulares": 17
+  }
+}
