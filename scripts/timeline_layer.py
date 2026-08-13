@@ -27,7 +27,7 @@ import os
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 YEAR_START = 1995     # Technisys, la mas vieja de la tabla con ano citable
 YEAR_END = 2026
@@ -223,6 +223,23 @@ def hito_year(text):
 SEED_HEIGHT = 0.30
 # Si la empresa no tiene hitos con fecha, tarda esto en llegar a su altura.
 DEFAULT_GROWTH_YEARS = 7
+
+
+def parent_inverse_of(part):
+    """La inversa del padre, calculada y no leida de matrix_world.
+
+    ESTE ERA EL BUG DE LOS LOGOS TIRADOS EN CUALQUIER LADO. Blender no
+    recalcula `matrix_world` cuando uno le asigna `location` por Python: espera
+    a que corra el depsgraph. Al emparentar en la misma pasada en que se crea el
+    edificio, `part.matrix_world` todavia devolvia la identidad, la inversa daba
+    identidad, y el cartel quedaba corrido por las coordenadas del sitio — un
+    logo aparecia tirado en el pasto a cien metros de su edificio.
+
+    El edificio se crea con rotacion cero y escala uno, y su `location` es el
+    punto del sitio, asi que su matriz en reposo es una traslacion pura. La
+    inversa se arma de ahi y no depende de que el depsgraph haya corrido.
+    """
+    return Matrix.Translation(part.location).inverted()
 
 
 def reveal_delay(grow):
@@ -666,9 +683,11 @@ def animate_closed(planned, parts, collection, by_year, end_by_year, report):
         # Se cuelga del edificio, igual que los carteles de las empresas.
         # Keyframear su altura en paralelo lo dejaba flotando sobre un terreno
         # vacio mientras la obra subia.
+        # Este cartel lo creamos nosotros y su origen esta en el techo, asi que
+        # emparentarlo es seguro: no hay cadena previa que romper.
         if part is not None:
             sign.parent = part
-            sign.matrix_parent_inverse = part.matrix_world.inverted()
+            sign.matrix_parent_inverse = parent_inverse_of(part)
         keyframe_visible_range(
             sign, frame_in + (reveal_delay(grow) if part else 0), frame_out)
 
@@ -701,6 +720,7 @@ def animate_signs(root, scene, report, collection):
     by_year, end_by_year = {}, {}
     animated, missing_objects, sin_ano, objects = [], [], set(), []
     built = 0
+    huerfanos = 0
 
     # Primera pasada: que carteles tienen ano y a que sitio pertenecen.
     plan, targets = [], []
@@ -712,9 +732,20 @@ def animate_signs(root, scene, report, collection):
             continue
         info = table.get(brand)
         if info is None:
-            # Sin ano citable no se anima: queda en la ciudad desde el primer
-            # fotograma, exactamente como la dejo upstream.
+            # Sin ano citable la marca no tiene fecha propia, pero el cartel NO
+            # puede estar desde el primer fotograma: su edificio es del tejido y
+            # se construye en un ano posterior, asi que el logo quedaba tirado
+            # en un lote vacio hasta que le llegaba el edificio. Es exactamente
+            # el "logo en el pasto" que se veia. Se revela cuando su edificio
+            # esta terminado.
             sin_ano.add(brand)
+            site = site_for_owner(sites, entry["owner"])
+            if site is not None:
+                keyframe_visible_from(
+                    obj,
+                    year_to_frame(fabric_year(site["at"]))
+                    + int(FRAMES_PER_YEAR * 0.6) + 1)
+                huerfanos += 1
             continue
         key = "%s_%s" % (brand.replace(" ", "_").lower(),
                          entry["name"].split(".")[-1])
@@ -758,8 +789,15 @@ def animate_signs(root, scene, report, collection):
             # deforma, porque la escala vuelve a 1, y un cartel achatado sobre
             # un edificio a medio construir es exactamente lo que uno espera
             # ver.
-            obj.parent = part
-            obj.matrix_parent_inverse = part.matrix_world.inverted()
+            # NO se toca el padre del cartel. Los carteles de upstream ya vienen
+            # emparentados, y su ubicacion en el mundo sale de esa cadena:
+            # reasignarles el padre al edificio los descoloca. Medido, 29 de 39
+            # terminaban corridos, el peor a 445 m de su edificio — un logo
+            # tirado en el pasto a dos cuadras.
+            #
+            # Tampoco hace falta que lo siga: el cartel se revela cuando la obra
+            # ya termino, asi que el edificio esta a su altura final y el cartel
+            # calza donde upstream lo puso.
 
             set_key_interpolation("BEZIER")
             part.scale = (1.0, 1.0, 0.001)
@@ -817,6 +855,7 @@ def animate_signs(root, scene, report, collection):
     report["signs_animated"] = animated
     report["edificios_animados"] = built
     report["signs_sin_ano"] = sorted(sin_ano)
+    report["signs_sin_ano_atados_a_su_edificio"] = huerfanos
     report["objetos_del_manifiesto_ausentes"] = missing_objects
     if missing_objects:
         report["warnings"].append(
