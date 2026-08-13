@@ -883,6 +883,53 @@ def animate_signs(root, scene, report, collection):
     return by_year, end_by_year, table, objects
 
 
+def extend_ground(cam, scene, collection, report):
+    """Alarga el suelo mas alla de la ciudad.
+
+    upstream construye la ciudad sobre una placa del tamano justo, porque su
+    camara nunca se aleja tanto. Con el encuadre abierto a la ciudad entera esa
+    placa termina antes que el cuadro y la ciudad queda como una isla flotando
+    en el fondo oscuro.
+
+    El material NO se inventa: se toma el del objeto mas grande de SITE, que es
+    la calzada que ya esta puesta, asi que el suelo nuevo empalma con el viejo
+    en vez de parchear con un gris a ojo.
+    """
+    site = bpy.data.collections.get("SITE")
+    fuente = None
+    if site:
+        mallas = [o for o in site.all_objects
+                  if o.type == "MESH" and o.data.materials]
+        if mallas:
+            fuente = max(mallas, key=lambda o: o.dimensions.x * o.dimensions.y)
+
+    if fuente is not None:
+        material = fuente.data.materials[0]
+        z = min((fuente.matrix_world @ Vector(c)).z for c in fuente.bound_box)
+    else:
+        material = solid_material("asfalto", (0.055, 0.05, 0.048),
+                                  roughness=0.9)
+        z = 0.0
+
+    lado = cam.data.ortho_scale * 2.2
+    bpy.ops.mesh.primitive_plane_add(size=lado, location=(0.0, 0.0, z - 0.05))
+    plano = bpy.context.active_object
+    plano.name = TAG + "suelo"
+    plano.data.name = TAG + "suelo"
+    plano.data.materials.append(material)
+    for coll in list(plano.users_collection):
+        coll.objects.unlink(plano)
+    collection.objects.link(plano)
+
+    report["suelo_extendido"] = {
+        "lado_m": round(lado, 1),
+        "z": round(z - 0.05, 3),
+        "material": material.name,
+        "tomado_de": fuente.name if fuente else "creado (SITE sin mallas)",
+    }
+    return plano
+
+
 def build_hud(cam, scene, by_year, end_by_year, table, collection, report):
     """Ano y titulares, pegados a la camara. Como la camara es fija, quedan
     clavados en el cuadro."""
@@ -991,6 +1038,7 @@ def main():
                         "hito": ["%d: %s" % (int(o["year"]), o["texto"])
                                  for o in obras]}
 
+    extend_ground(cam, scene, bld_coll, report)
     build_hud(cam, scene, by_year, end_by_year, table, hud_coll, report)
 
     out_dir = os.path.join(root, "scene_city")

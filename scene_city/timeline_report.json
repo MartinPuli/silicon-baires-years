@@ -683,6 +683,12 @@
     "keyframes": 0,
     "nota": "Se limpio la animacion del objeto Y la del dato de camara (upstream anima ortho_scale de 306 a 170)."
   },
+  "suelo_extendido": {
+    "lado_m": 2230.0,
+    "z": -0.05,
+    "material": "Asphalt",
+    "tomado_de": "site"
+  },
   "hud": {
     "anos": 32,
     "titulares": 25
