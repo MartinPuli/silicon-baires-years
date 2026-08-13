@@ -40,12 +40,12 @@
       "como_termino": "Anunció su cierre después de veinte años",
       "edificio": "TL_bld_cerro_taringa",
       "sitio": [
-        -84.25,
-        -89.75
+        66.25,
+        -254.75
       ]
     }
   ],
-  "tejido_animado": 94,
+  "tejido_animado": 85,
   "tejido_nota": "Puesta en escena, no dato: los edificios que no son de ninguna empresa se reparten a lo largo del periodo con un sesgo hacia los anos tardios, para que la ciudad arranque casi vacia. El reparto es determinista, asi que siempre se construye en el mismo orden.",
   "landmarks": [
     {
@@ -117,6 +117,20 @@
         -75.0
       ],
       "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.003",
+      "brand": "BASEMENT",
+      "year": 2018,
+      "frame_in": 438,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_basement_003",
+      "sitio": [
+        -84.25,
+        57.75
+      ],
+      "confidence": "user_provided"
     },
     {
       "sign": "Sign.004",
@@ -242,6 +256,20 @@
       "confidence": "confirmed"
     },
     {
+      "sign": "Sign.014",
+      "brand": "TAKENOS",
+      "year": 2022,
+      "frame_in": 514,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_takenos_014",
+      "sitio": [
+        349.75,
+        -167.0
+      ],
+      "confidence": "user_provided"
+    },
+    {
       "sign": "Sign.015",
       "brand": "REBILL",
       "year": 2020,
@@ -270,6 +298,20 @@
       "confidence": "reported"
     },
     {
+      "sign": "Sign.017",
+      "brand": "BELO",
+      "year": 2021,
+      "frame_in": 495,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_belo_017",
+      "sitio": [
+        172.25,
+        -377.25
+      ],
+      "confidence": "user_provided"
+    },
+    {
       "sign": "Sign.018",
       "brand": "TIENDANUBE",
       "year": 2011,
@@ -282,6 +324,20 @@
         -167.0
       ],
       "confidence": "conflicting_sources"
+    },
+    {
+      "sign": "Sign.019",
+      "brand": "MASLOW",
+      "year": 2021,
+      "frame_in": 495,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_maslow_019",
+      "sitio": [
+        270.25,
+        -243.0
+      ],
+      "confidence": "user_provided"
     },
     {
       "sign": "Sign.020",
@@ -338,6 +394,20 @@
         -313.0
       ],
       "confidence": "reported"
+    },
+    {
+      "sign": "Sign.026",
+      "brand": "PATMOS",
+      "year": 2013,
+      "frame_in": 343,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_patmos_026",
+      "sitio": [
+        -351.75,
+        -327.75
+      ],
+      "confidence": "user_provided"
     },
     {
       "sign": "Sign.046",
@@ -466,6 +536,48 @@
       "confidence": "confirmed"
     },
     {
+      "sign": "Sign.094",
+      "brand": "OPENZEPPELIN",
+      "year": 2015,
+      "frame_in": 381,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_openzeppelin_094",
+      "sitio": [
+        -84.25,
+        -89.75
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.095",
+      "brand": "REVAMOS",
+      "year": 2021,
+      "frame_in": 495,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_revamos_095",
+      "sitio": [
+        -113.75,
+        -60.25
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.096",
+      "brand": "PAISANOS",
+      "year": 2012,
+      "frame_in": 324,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_paisanos_096",
+      "sitio": [
+        201.75,
+        -167.0
+      ],
+      "confidence": "user_provided"
+    },
+    {
       "sign": "Sign.097",
       "brand": "CODERHOUSE",
       "year": 2014,
@@ -478,6 +590,20 @@
         -2.0
       ],
       "confidence": "reported"
+    },
+    {
+      "sign": "Sign.098",
+      "brand": "COMPLIF",
+      "year": 2020,
+      "frame_in": 476,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_complif_098",
+      "sitio": [
+        201.75,
+        -377.25
+      ],
+      "confidence": "user_provided"
     },
     {
       "sign": "Sign.099",
@@ -494,43 +620,34 @@
       "confidence": "user_provided"
     }
   ],
-  "edificios_animados": 29,
+  "edificios_animados": 38,
   "signs_sin_ano": [
     "ANDA",
     "ARROYO",
     "AUSTRAL",
-    "BASEMENT",
-    "BELO",
     "BERRY",
     "CARDON",
     "CEIBO",
-    "COMPLIF",
     "CUARZO",
     "FARO",
     "FERNET",
     "KETZAL",
     "LINCE",
     "LUMA",
-    "MASLOW",
     "MATE",
     "MODO",
     "NODO",
     "NUBE",
     "OMBU",
-    "OPENZEPPELIN",
-    "PAISANOS",
     "PAMPA",
-    "PATMOS",
     "PILAR",
     "PUERTO",
     "QUILME",
     "RAMBLA",
-    "REVAMOS",
     "RIACHO",
     "SALTO",
     "SEIBO",
     "SUR",
-    "TAKENOS",
     "TALA",
     "TANGO",
     "TIMBO",
@@ -550,9 +667,9 @@
   "camera": {
     "congelada_en_frame": 1,
     "location": [
-      940.5,
-      786.3,
-      722.3
+      949.2,
+      769.4,
+      732.1
     ],
     "rotation_deg": [
       59.4,
@@ -560,13 +677,13 @@
       135.0
     ],
     "ortho_scale": 470.0,
-    "ciudad_ancho_m": 537.5,
-    "ciudad_alto_m": 149.6,
+    "ciudad_ancho_m": 518.4,
+    "ciudad_alto_m": 157.4,
     "keyframes": 0,
     "nota": "Se limpio la animacion del objeto Y la del dato de camara (upstream anima ortho_scale de 306 a 170)."
   },
   "hud": {
     "anos": 32,
-    "titulares": 23
+    "titulares": 25
   }
 }

@@ -163,6 +163,51 @@
       "confidence": "reported",
       "sources": ["https://www.crunchbase.com/organization/rebill"]
     },
+    "PAISANOS": {
+      "year": 2012,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "PATMOS": {
+      "year": 2013,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "OPENZEPPELIN": {
+      "year": 2015,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "BASEMENT": {
+      "year": 2018,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "COMPLIF": {
+      "year": 2020,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "BELO": {
+      "year": 2021,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "MASLOW": {
+      "year": 2021,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "REVAMOS": {
+      "year": 2021,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "TAKENOS": {
+      "year": 2022,
+      "confidence": "user_provided",
+      "sources": []
+    },
     "SLA": {
       "year": 2026,
       "confidence": "user_provided",
