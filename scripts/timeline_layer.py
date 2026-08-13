@@ -32,6 +32,9 @@ from mathutils import Vector
 YEAR_START = 1995     # Technisys, la mas vieja de la tabla con ano citable
 YEAR_END = 2026
 FRAMES_PER_YEAR = 19  # 32 anos * 19 = 608, y el .blend de upstream llega a 624
+# Cuanto de un ano tarda un edificio en levantarse. Bajo a proposito: a 0,7 el
+# ano entero era una obra en curso y la pieza se sentia lenta.
+GROW_SHARE = 0.45
 
 TAG = "TL_"
 
@@ -46,7 +49,9 @@ MARGIN = 1.22         # aire alrededor de la caja de los carteles con ano
 # punto donde la ciudad empieza a ser una isla en el fondo y los logos dejan
 # de leerse.
 ORTHO_MIN = 306.0
-ORTHO_MAX = 620.0
+# A 620 los logos de las empresas son manchitas de tres pixeles. Cerrando a
+# 470 se leen, al precio de que algun cartel de los bordes quede afuera.
+ORTHO_MAX = 470.0
 
 
 def argv_after_ddash():
@@ -466,7 +471,7 @@ def animate_landmarks(root, collection, by_year, report):
                 claimed.setdefault(pieza["id"], []).append(face)
                 break
 
-    grow = int(FRAMES_PER_YEAR * 0.7)
+    grow = int(FRAMES_PER_YEAR * GROW_SHARE)
     hechas = []
     materials = list(landmarks.data.materials)
     for pieza in piezas:
@@ -585,7 +590,7 @@ def plan_closed(root, sites, targets, report):
 
 def animate_closed(planned, parts, collection, by_year, end_by_year, report):
     """Sube el edificio en el ano de fundacion y lo baja el ano que cerro."""
-    grow = int(FRAMES_PER_YEAR * 0.7)
+    grow = int(FRAMES_PER_YEAR * GROW_SHARE)
     hechas = []
     for empresa, site, key in planned:
         part = parts.get(key)
@@ -647,7 +652,7 @@ def animate_signs(root, scene, report, collection):
     sites = site_index(root)
     city = bpy.data.objects.get("buildings")
 
-    grow = int(FRAMES_PER_YEAR * 0.7)
+    grow = int(FRAMES_PER_YEAR * GROW_SHARE)
     by_year, end_by_year = {}, {}
     animated, missing_objects, sin_ano, objects = [], [], set(), []
     built = 0
@@ -693,23 +698,35 @@ def animate_signs(root, scene, report, collection):
         if part is not None:
             built += 1
             steps = growth_steps(year, info)
+            # El cartel viaja con su edificio. El edificio escala en Z desde el
+            # piso, asi que un punto que estaba a z sube a z*escala: alcanza con
+            # keyframear la altura del cartel con el mismo factor, en los mismos
+            # fotogramas. Parentarlo lo estiraria junto con la torre.
+            sign_z = obj.location.z
+
             set_key_interpolation("BEZIER")
             part.scale = (1.0, 1.0, 0.001)
             part.keyframe_insert("scale", index=2, frame=1)
             part.keyframe_insert("scale", index=2, frame=frame_in)
+            obj.location.z = sign_z * 0.001
+            obj.keyframe_insert("location", index=2, frame=frame_in)
             for step_year, height in steps:
+                frame = year_to_frame(step_year) + grow
                 part.scale = (1.0, 1.0, height)
-                part.keyframe_insert(
-                    "scale", index=2,
-                    frame=year_to_frame(step_year) + grow)
+                part.keyframe_insert("scale", index=2, frame=frame)
+                obj.location.z = sign_z * height
+                obj.keyframe_insert("location", index=2, frame=frame)
             if frame_end:
                 part.keyframe_insert("scale", index=2, frame=frame_end)
+                obj.keyframe_insert("location", index=2, frame=frame_end)
                 part.scale = (1.0, 1.0, 0.001)
+                obj.location.z = sign_z * 0.001
                 part.keyframe_insert("scale", index=2, frame=frame_end + grow)
+                obj.keyframe_insert("location", index=2, frame=frame_end + grow)
+            obj.location.z = sign_z
 
-        # El cartel entra cuando el edificio termino de subir, y se va cuando
-        # empieza a bajar.
-        keyframe_visible_from(obj, frame_in + (grow if part else 0))
+        # El cartel entra con el edificio, no despues: sube con el.
+        keyframe_visible_from(obj, frame_in)
         if frame_end:
             set_key_interpolation("CONSTANT")
             for prop in ("hide_viewport", "hide_render"):
