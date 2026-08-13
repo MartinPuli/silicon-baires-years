@@ -20,6 +20,7 @@ Uso:
         -P scripts/timeline_layer.py -- --repo .
 """
 
+import hashlib
 import json
 import math
 import os
@@ -203,7 +204,7 @@ def hito_year(text):
 
 # Que fraccion de su altura tiene el edificio el dia que la empresa se funda.
 # El resto lo gana creciendo.
-SEED_HEIGHT = 0.42
+SEED_HEIGHT = 0.30
 # Si la empresa no tiene hitos con fecha, tarda esto en llegar a su altura.
 DEFAULT_GROWTH_YEARS = 7
 
@@ -343,6 +344,97 @@ def split_buildings(city, targets, collection):
     bm.free()
     city.data.update()
     return made
+
+
+def deterministic_unit(*parts):
+    """Un numero estable en [0,1) a partir de coordenadas.
+
+    Estable entre corridas: la ciudad tiene que completarse siempre en el mismo
+    orden, si no cada render cuenta una historia distinta.
+    """
+    seed = "|".join("%.2f" % p if isinstance(p, float) else str(p)
+                    for p in parts)
+    digest = hashlib.sha1(seed.encode("utf-8")).hexdigest()
+    return int(digest[:8], 16) / float(0xFFFFFFFF)
+
+
+def fabric_year(at):
+    """En que ano aparece un edificio que NO es de ninguna empresa.
+
+    Esto es una decision de puesta en escena, no un dato: la ciudad arranca
+    casi vacia y se completa a lo largo del periodo. El exponente sesga el
+    reparto hacia los anos tardios, asi que al principio hay pocos edificios y
+    el barrio se llena a medida que avanza. Las empresas, en cambio, aparecen
+    en su ano documentado.
+    """
+    unit = deterministic_unit(at[0], at[1])
+    return YEAR_START + int((YEAR_END - YEAR_START) * (unit ** 0.62))
+
+
+def animate_city_fabric(city, sites, claimed_at, collection, report):
+    """Levanta TODO el resto de la ciudad a lo largo del periodo."""
+    rest = [(("fabric_%d" % index), site)
+            for index, site in enumerate(sites)
+            if (round(site["at"][0], 2), round(site["at"][1], 2))
+            not in claimed_at]
+    parts = split_buildings(city, rest, collection)
+    grow = int(FRAMES_PER_YEAR * 0.6)
+    for key, site in rest:
+        part = parts.get(key)
+        if part is None:
+            continue
+        frame_in = year_to_frame(fabric_year(site["at"]))
+        set_key_interpolation("BEZIER")
+        part.scale = (1.0, 1.0, 0.001)
+        part.keyframe_insert("scale", index=2, frame=1)
+        part.keyframe_insert("scale", index=2, frame=frame_in)
+        part.scale = (1.0, 1.0, 1.0)
+        part.keyframe_insert("scale", index=2, frame=frame_in + grow)
+    report["tejido_animado"] = len(parts)
+    report["tejido_nota"] = (
+        "Puesta en escena, no dato: los edificios que no son de ninguna "
+        "empresa se reparten a lo largo del periodo con un sesgo hacia los "
+        "anos tardios, para que la ciudad arranque casi vacia. El reparto es "
+        "determinista, asi que siempre se construye en el mismo orden.")
+
+
+def thin_early_life(collection_name, keep_at_start, report_key, report):
+    """Menos autos y menos gente al principio, mas a medida que avanza.
+
+    Tambien es puesta en escena. Cada objeto recibe un ano deterministico a
+    partir de su nombre; antes de ese ano no esta.
+    """
+    coll = bpy.data.collections.get(collection_name)
+    if coll is None:
+        return
+    objects = [o for o in coll.all_objects if o.type == "MESH"]
+    hidden = 0
+    for obj in objects:
+        unit = deterministic_unit(obj.name)
+        if unit < keep_at_start:
+            continue                       # estos estan desde el principio
+        share = (unit - keep_at_start) / max(1e-6, 1.0 - keep_at_start)
+        year = YEAR_START + int((YEAR_END - YEAR_START) * (share ** 0.75))
+        keyframe_visible_from(obj, year_to_frame(year))
+        hidden += 1
+    report[report_key] = {"total": len(objects), "escalonados": hidden,
+                          "presentes_desde_1995": len(objects) - hidden}
+
+
+def build_title_progressively(collection_name, report):
+    """Las letras de BUENOS AIRES se van armando de a una."""
+    coll = bpy.data.collections.get(collection_name)
+    if coll is None:
+        return
+    letters = sorted((o for o in coll.all_objects if o.type == "MESH"),
+                     key=lambda o: o.name)
+    if not letters:
+        return
+    span = YEAR_END - YEAR_START
+    for index, obj in enumerate(letters):
+        year = YEAR_START + int(span * (index + 1) / (len(letters) + 1))
+        keyframe_visible_from(obj, year_to_frame(year))
+    report["titulo_letras"] = len(letters)
 
 
 def plan_closed(root, sites, targets, report):
@@ -538,6 +630,15 @@ def animate_signs(root, scene, report, collection):
         })
 
     animate_closed(closed, parts, collection, by_year, end_by_year, report)
+
+    # Y ahora el resto de la ciudad: arranca casi vacia y se completa.
+    claimed_at = {(round(s["at"][0], 2), round(s["at"][1], 2))
+                  for _, s in targets}
+    if city is not None:
+        animate_city_fabric(city, sites, claimed_at, collection, report)
+    thin_early_life("TRAFFIC", 0.12, "transito", report)
+    thin_early_life("PEOPLE", 0.10, "gente", report)
+    build_title_progressively("TITLE", report)
 
     report["signs_animated"] = animated
     report["edificios_animados"] = built

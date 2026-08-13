@@ -163,6 +163,12 @@
       "confidence": "reported",
       "sources": ["https://www.crunchbase.com/organization/rebill"]
     },
+    "SLA": {
+      "year": 2026,
+      "confidence": "user_provided",
+      "sources": [],
+      "note": "Año indicado por el autor del repo, no verificado contra una fuente publicada. Es el edificio más nuevo de la ciudad: se construye recién en el último año de la pieza."
+    },
     "COCOS": {
       "year": 2021,
       "confidence": "reported",

@@ -45,6 +45,19 @@
       ]
     }
   ],
+  "tejido_animado": 94,
+  "tejido_nota": "Puesta en escena, no dato: los edificios que no son de ninguna empresa se reparten a lo largo del periodo con un sesgo hacia los anos tardios, para que la ciudad arranque casi vacia. El reparto es determinista, asi que siempre se construye en el mismo orden.",
+  "transito": {
+    "total": 1972,
+    "escalonados": 1762,
+    "presentes_desde_1995": 210
+  },
+  "gente": {
+    "total": 2511,
+    "escalonados": 2273,
+    "presentes_desde_1995": 238
+  },
+  "titulo_letras": 24,
   "signs_animated": [
     {
       "sign": "Sign.000",
@@ -448,9 +461,23 @@
         -2.0
       ],
       "confidence": "reported"
+    },
+    {
+      "sign": "Sign.099",
+      "brand": "SLA",
+      "year": 2026,
+      "frame_in": 590,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_sla_099",
+      "sitio": [
+        -26.0,
+        153.0
+      ],
+      "confidence": "user_provided"
     }
   ],
-  "edificios_animados": 28,
+  "edificios_animados": 29,
   "signs_sin_ano": [
     "ANDA",
     "ARROYO",
@@ -485,7 +512,6 @@
     "RIACHO",
     "SALTO",
     "SEIBO",
-    "SLA",
     "SUR",
     "TAKENOS",
     "TALA",
@@ -524,6 +550,6 @@
   },
   "hud": {
     "anos": 32,
-    "titulares": 22
+    "titulares": 23
   }
 }
