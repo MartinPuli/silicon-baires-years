@@ -345,6 +345,101 @@ def split_buildings(city, targets, collection):
     return made
 
 
+def plan_closed(root, sites, targets, report):
+    """Le busca terreno a las empresas que cerraron.
+
+    Ninguna tiene cartel en la ciudad de upstream, asi que se les asigna un
+    sitio libre —de los que ningun cartel con ano reclamo— cerca del centro del
+    cuadro y con altura suficiente para que se note cuando se cae.
+    """
+    path = os.path.join(root, "data", "cerraron.json")
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as fh:
+        empresas = json.load(fh)["empresas"]
+
+    taken = {key for key, _ in targets}
+    taken_at = {(round(s["at"][0], 2), round(s["at"][1], 2))
+                for _, s in targets}
+    # El centro del cuadro es el de los sitios que ya reclamaron los carteles
+    # con ano: es sobre esa caja que despues se calcula el encuadre.
+    if targets:
+        focus = Vector((sum(s["at"][0] for _, s in targets) / len(targets),
+                        sum(s["at"][1] for _, s in targets) / len(targets)))
+    else:
+        focus = Vector((0.0, 0.0))
+    free = [s for s in sites
+            if (round(s["at"][0], 2), round(s["at"][1], 2)) not in taken_at
+            and float(s["top"]) >= 18.0]
+    free.sort(key=lambda s: (Vector((s["at"][0], s["at"][1])) - focus).length)
+
+    planned = []
+    for empresa in empresas:
+        if not free:
+            report["warnings"].append(
+                "sin terreno libre para %s" % empresa["name"])
+            continue
+        site = free.pop(0)
+        key = "cerro_" + empresa["id"]
+        if key in taken:
+            continue
+        targets.append((key, site))
+        planned.append((empresa, site, key))
+    return planned
+
+
+def animate_closed(planned, parts, collection, by_year, end_by_year, report):
+    """Sube el edificio en el ano de fundacion y lo baja el ano que cerro."""
+    grow = int(FRAMES_PER_YEAR * 0.7)
+    hechas = []
+    for empresa, site, key in planned:
+        part = parts.get(key)
+        founded, closed = int(empresa["founded"]), int(empresa["closed"])
+        frame_in, frame_out = year_to_frame(founded), year_to_frame(closed)
+
+        if part is not None:
+            set_key_interpolation("BEZIER")
+            part.scale = (1.0, 1.0, 0.001)
+            part.keyframe_insert("scale", index=2, frame=1)
+            part.keyframe_insert("scale", index=2, frame=frame_in)
+            part.scale = (1.0, 1.0, 1.0)
+            part.keyframe_insert("scale", index=2, frame=frame_in + grow)
+            part.keyframe_insert("scale", index=2, frame=frame_out)
+            part.scale = (1.0, 1.0, 0.001)
+            part.keyframe_insert("scale", index=2, frame=frame_out + grow)
+
+        # Cartel propio: la ciudad de upstream no trae uno para estas.
+        at = (site["at"][0], site["at"][1])
+        curve = bpy.data.curves.new(TAG + "cerro_" + empresa["id"], type="FONT")
+        curve.body = empresa["name"]
+        curve.size = max(7.0, min(13.0, float(site["top"]) * 0.35))
+        curve.align_x = "CENTER"
+        curve.align_y = "BOTTOM"
+        curve.extrude = 0.4
+        sign = bpy.data.objects.new(TAG + "cerro_" + empresa["id"], curve)
+        sign.location = (at[0], at[1], float(site["top"]) + 1.5)
+        # Encarar la camara es copiarle la rotacion: es ortografica, asi que
+        # todos los rayos son paralelos y una sola rotacion sirve para todos
+        # los carteles, esten donde esten.
+        sign.rotation_euler = bpy.context.scene.camera.rotation_euler
+        sign.data.materials.append(emission_material(
+            "cerro_%s" % empresa["id"], (1.0, 0.30, 0.22), 4.0))
+        collection.objects.link(sign)
+        keyframe_visible_range(sign, frame_in + grow, frame_out)
+
+        by_year.setdefault(founded, set()).add(empresa["name"])
+        end_by_year.setdefault(closed, set()).add(empresa["name"])
+        hechas.append({
+            "empresa": empresa["name"],
+            "founded": founded,
+            "closed": closed,
+            "como_termino": empresa["como_termino"],
+            "edificio": part.name if part else None,
+            "sitio": [round(v, 2) for v in site["at"]],
+        })
+    report["cerraron"] = hechas
+
+
 def animate_signs(root, scene, report, collection):
     """Cada empresa levanta su edificio en su ano y lo baja cuando deja de ser
     independiente. El cartel se prende cuando el edificio termino de crecer."""
@@ -383,7 +478,12 @@ def animate_signs(root, scene, report, collection):
         if site is not None:
             targets.append((key, site))
 
-    # Segunda: una sola pasada de bmesh para separarlos a todos.
+    # Las que cerraron no tienen cartel en la ciudad de upstream: se les da un
+    # terreno libre. Van en la MISMA tanda de bmesh, porque separar el mesh dos
+    # veces sobre el mismo objeto duplicaria caras ya sacadas.
+    closed = plan_closed(root, sites, targets, report)
+
+    # Segunda pasada: una sola de bmesh para separarlos a todos.
     parts = split_buildings(city, targets, collection) if (
         city is not None and targets) else {}
 
@@ -436,6 +536,8 @@ def animate_signs(root, scene, report, collection):
             "sitio": [round(v, 2) for v in site["at"]] if site else None,
             "confidence": info.get("confidence"),
         })
+
+    animate_closed(closed, parts, collection, by_year, end_by_year, report)
 
     report["signs_animated"] = animated
     report["edificios_animados"] = built

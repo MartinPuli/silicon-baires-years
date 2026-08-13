@@ -127,6 +127,46 @@
       "confidence": "reported",
       "sources": ["https://www.bloomberglinea.com/2021/10/21/la-fintech-argentina-pomelo-recaudo-us35m-para-desembarcar-en-brasil-y-mexico/"],
       "hito": "2026: levanta US$55 M"
+    },
+    "GALICIA": {
+      "year": 1905,
+      "confidence": "confirmed",
+      "sources": ["https://en.wikipedia.org/wiki/Grupo_Financiero_Galicia"],
+      "note": "Anterior a la ventana de la pieza: su edificio esta desde el primer fotograma, pero por fecha documentada y no por falta de dato."
+    },
+    "NARANJA X": {
+      "year": 1985,
+      "confidence": "confirmed",
+      "sources": ["https://en.wikipedia.org/wiki/Naranja_X"],
+      "note": "Nace en Cordoba como Tarjeta Naranja. Tambien anterior a la ventana."
+    },
+    "MERCADO PAGO": {
+      "year": 2004,
+      "confidence": "reported",
+      "sources": ["https://en.wikipedia.org/wiki/Mercado_Libre", "https://payatlas.com/payment-method/mercado-pago-5109"],
+      "note": "Brazo de pagos de Mercado Libre, lanzado en 2004."
+    },
+    "DECENTRALAND": {
+      "year": 2017,
+      "confidence": "reported",
+      "sources": ["https://en.wikipedia.org/wiki/Decentraland"],
+      "note": "Se fecha por su ICO de 2017, que es lo que la fuente documenta."
+    },
+    "HUMAND": {
+      "year": 2019,
+      "confidence": "reported",
+      "sources": ["https://www.forbesargentina.com/innovacion/tras-perseguir-marcos-galperin-dos-argentinos-sub-25-crearon-humand-app-crear-comunidades-digitales-corporativas-n37336"],
+      "hito": "2026: ronda de US$66 M"
+    },
+    "REBILL": {
+      "year": 2020,
+      "confidence": "reported",
+      "sources": ["https://www.crunchbase.com/organization/rebill"]
+    },
+    "COCOS": {
+      "year": 2021,
+      "confidence": "reported",
+      "sources": ["https://startupsargentinas.com/startups/cocos-capital", "https://www.latamfintech.co/articles/cocos-la-fintech-argentina-que-busca-democratizar-el-acceso-al-mercado-de-capitales-en-latinoamerica"]
     }
   },
   "sin_ano": {
