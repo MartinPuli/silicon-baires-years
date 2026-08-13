@@ -686,8 +686,9 @@
   "suelo_extendido": {
     "lado_m": 2230.0,
     "z": -0.05,
-    "material": "Asphalt",
-    "tomado_de": "site"
+    "material": "TL_asfalto_fondo",
+    "color_derivado_de": "site",
+    "factor_oscurecido": 0.45
   },
   "hud": {
     "anos": 32,

@@ -95,6 +95,18 @@ def emission_material(name, rgb, strength):
     return mat
 
 
+def solid_material(name, rgb, roughness=0.5):
+    """Material opaco comun. El de emision no sirve para el suelo: brillaria."""
+    mat = bpy.data.materials.new(TAG + name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    if bsdf is not None:
+        bsdf.inputs["Base Color"].default_value = (rgb[0], rgb[1], rgb[2], 1.0)
+        if "Roughness" in bsdf.inputs:
+            bsdf.inputs["Roughness"].default_value = roughness
+    return mat
+
+
 def set_key_interpolation(kind):
     """Blender 5 saco Action.fcurves (acciones con slots y capas), asi que la
     interpolacion se fija en las preferencias ANTES de insertar en vez de
@@ -903,13 +915,26 @@ def extend_ground(cam, scene, collection, report):
         if mallas:
             fuente = max(mallas, key=lambda o: o.dimensions.x * o.dimensions.y)
 
+    # El suelo de fondo va MAS OSCURO que la calzada de la ciudad. Copiando el
+    # material tal cual, el fondo quedaba del mismo tono que las calles y la
+    # trama vial se perdia: la ciudad se leia como una mancha. Se toma el color
+    # de la calzada real y se lo baja, asi el fondo sigue siendo pavimento pero
+    # las calles vuelven a recortarse contra el.
+    base_rgb, z = (0.055, 0.05, 0.048), 0.0
+    origen = "creado (SITE sin mallas)"
     if fuente is not None:
-        material = fuente.data.materials[0]
+        origen = fuente.name
         z = min((fuente.matrix_world @ Vector(c)).z for c in fuente.bound_box)
-    else:
-        material = solid_material("asfalto", (0.055, 0.05, 0.048),
-                                  roughness=0.9)
-        z = 0.0
+        # El slot puede estar vacio o el material no usar nodos: la calzada de
+        # upstream es geometria generada y no hay garantia de ninguna de las dos.
+        calzada = fuente.data.materials[0] if fuente.data.materials else None
+        bsdf = None
+        if calzada is not None and calzada.use_nodes:
+            bsdf = calzada.node_tree.nodes.get("Principled BSDF")
+        if bsdf is not None and "Base Color" in bsdf.inputs:
+            r, g, b, _ = bsdf.inputs["Base Color"].default_value
+            base_rgb = (r * 0.45, g * 0.45, b * 0.45)
+    material = solid_material("asfalto_fondo", base_rgb, roughness=0.92)
 
     lado = cam.data.ortho_scale * 2.2
     bpy.ops.mesh.primitive_plane_add(size=lado, location=(0.0, 0.0, z - 0.05))
@@ -925,7 +950,8 @@ def extend_ground(cam, scene, collection, report):
         "lado_m": round(lado, 1),
         "z": round(z - 0.05, 3),
         "material": material.name,
-        "tomado_de": fuente.name if fuente else "creado (SITE sin mallas)",
+        "color_derivado_de": origen,
+        "factor_oscurecido": 0.45,
     }
     return plano
 
