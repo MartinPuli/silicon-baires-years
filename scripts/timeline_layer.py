@@ -933,20 +933,11 @@ def build_hud(cam, scene, by_year, end_by_year, table, collection, report):
                         -half_w * 0.90, half_h * 0.78, half_h * 0.20, year_mat)
         keyframe_visible_range(year_obj, frame_in, frame_out)
 
-        lines = ["se funda " + b for b in sorted(by_year.get(year, ()))]
-        lines += ["cae " + b for b in sorted(end_by_year.get(year, ()))]
-        lines += sorted(hitos.get(year, ()))
-        if lines:
-            line = text("hud_line_%d" % year, "\n".join(lines[:4]),
-                        -half_w * 0.90, half_h * 0.56, half_h * 0.045,
-                        line_mat)
-            keyframe_visible_range(line, frame_in, frame_out)
-
-    # Arriba a la izquierda, sobre el fondo oscuro: abajo a la derecha caia
-    # sobre los edificios claros y el texto gris no se leia.
-    text("hud_title",
-         "SILICON BAIRES TIMELINE  -  ciudad de Aerolab/silicon-baires",
-         -half_w * 0.90, half_h * 0.90, half_h * 0.030, fixed_mat)
+    # Sin lineas de titulares debajo del ano y sin encabezado. Con la ciudad
+    # entera en cuadro el texto queda chico y sucio, y compite con lo unico que
+    # esta pieza tiene para mirar, que es como se construye. El ano solo alcanza
+    # para leer el paso del tiempo; los datos y sus fuentes viven en data/ y en
+    # el README, que es donde se pueden verificar.
     report["hud"] = {"anos": YEAR_END - YEAR_START + 1,
                      "titulares": len(by_year)}
 
