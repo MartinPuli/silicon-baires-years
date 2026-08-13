@@ -135,11 +135,22 @@ def extent_in_camera_plane(cam, objects):
     right, up = basis @ Vector((1, 0, 0)), basis @ Vector((0, 1, 0))
     us, vs = [], []
     for obj in objects:
-        for corner in obj.bound_box:
-            world = obj.matrix_world @ Vector(corner)
-            us.append(world.dot(right))
-            vs.append(world.dot(up))
-    return right, up, min(us), max(us), min(vs), max(vs)
+        centre = obj.matrix_world.translation
+        us.append(centre.dot(right))
+        vs.append(centre.dot(up))
+
+    # Percentiles y no min/max: un solo cartel perdido en una punta estiraba el
+    # encuadre y dejaba media pantalla de fondo vacio. Se recorta el 8% de cada
+    # extremo, asi el cuadro lo decide el grueso de las marcas.
+    def band(values):
+        values = sorted(values)
+        low = values[int(len(values) * 0.08)]
+        high = values[min(len(values) - 1, int(len(values) * 0.92))]
+        return low, high
+
+    u0, u1 = band(us)
+    v0, v1 = band(vs)
+    return right, up, u0, u1, v0, v1
 
 
 def freeze_camera(scene, report, subjects):
@@ -617,7 +628,19 @@ def animate_closed(planned, parts, collection, by_year, end_by_year, report):
         curve.align_y = "BOTTOM"
         curve.extrude = 0.4
         sign = bpy.data.objects.new(TAG + "cerro_" + empresa["id"], curve)
-        sign.location = (at[0], at[1], float(site["top"]) + 1.5)
+        # La altura sale del edificio QUE QUEDO, no del 'top' declarado del
+        # sitio: si en ese lote la geometria es mas baja, el cartel queda
+        # flotando en el aire sobre un terreno vacio.
+        # Se mide sobre los vertices del mesh y no sobre matrix_world: para
+        # cuando llega aca el objeto ya tiene la escala animada en 0.001 del
+        # primer keyframe, y el bounding box del mundo daria una altura
+        # aplastada.
+        if part is not None and part.data.vertices:
+            sign_z = (part.location.z
+                      + max(v.co.z for v in part.data.vertices) + 0.3)
+        else:
+            sign_z = float(site["top"]) + 0.3
+        sign.location = (at[0], at[1], sign_z)
         # Encarar la camara es copiarle la rotacion: es ortografica, asi que
         # todos los rayos son paralelos y una sola rotacion sirve para todos
         # los carteles, esten donde esten.
@@ -625,7 +648,20 @@ def animate_closed(planned, parts, collection, by_year, end_by_year, report):
         sign.data.materials.append(emission_material(
             "cerro_%s" % empresa["id"], (1.0, 0.30, 0.22), 4.0))
         collection.objects.link(sign)
-        keyframe_visible_range(sign, frame_in + grow, frame_out)
+        # El cartel sube Y baja con su edificio. Dejarlo clavado a la altura
+        # final lo deja flotando en el aire mientras la obra sube, que es
+        # exactamente lo que se veia mal.
+        if part is not None:
+            set_key_interpolation("BEZIER")
+            sign.location.z = sign_z * 0.001
+            sign.keyframe_insert("location", index=2, frame=frame_in)
+            sign.location.z = sign_z
+            sign.keyframe_insert("location", index=2, frame=frame_in + grow)
+            sign.keyframe_insert("location", index=2, frame=frame_out)
+            sign.location.z = sign_z * 0.001
+            sign.keyframe_insert("location", index=2, frame=frame_out + grow)
+            sign.location.z = sign_z
+        keyframe_visible_range(sign, frame_in, frame_out)
 
         by_year.setdefault(founded, set()).add(empresa["name"])
         end_by_year.setdefault(closed, set()).add(empresa["name"])
