@@ -225,6 +225,21 @@ SEED_HEIGHT = 0.30
 DEFAULT_GROWTH_YEARS = 7
 
 
+def reveal_delay(grow):
+    """El cartel aparece cuando la obra termino, no mientras sube.
+
+    Va colgado del edificio, asi que mientras la escala sube desde 0,001 el
+    cartel viene aplastado contra el piso. Probamos revelarlo al 40% de la obra
+    y no alcanzo: con la curva de aceleracion el edificio sigue bajo y el
+    barrido seguia encontrando 34 carteles tirados en el pasto, ahora durante
+    dos a cuatro fotogramas cada uno.
+
+    Esperar a que termine no le saca nada a la pieza: el edificio igual se
+    construye a la vista, y el cartel se prende cuando hay donde apoyarlo.
+    """
+    return grow + 1
+
+
 def growth_steps(founded, info):
     """Los escalones de altura del edificio, de la fundacion a su tamano final.
 
@@ -654,7 +669,8 @@ def animate_closed(planned, parts, collection, by_year, end_by_year, report):
         if part is not None:
             sign.parent = part
             sign.matrix_parent_inverse = part.matrix_world.inverted()
-        keyframe_visible_range(sign, frame_in, frame_out)
+        keyframe_visible_range(
+            sign, frame_in + (reveal_delay(grow) if part else 0), frame_out)
 
         by_year.setdefault(founded, set()).add(empresa["name"])
         end_by_year.setdefault(closed, set()).add(empresa["name"])
@@ -758,8 +774,12 @@ def animate_signs(root, scene, report, collection):
                 part.scale = (1.0, 1.0, 0.001)
                 part.keyframe_insert("scale", index=2, frame=frame_end + grow)
 
-        # El cartel entra con el edificio, no despues: sube con el.
-        keyframe_visible_from(obj, frame_in)
+        # El cartel entra con la obra ya arrancada, no en el fotograma exacto de
+        # la fundacion. En ese fotograma el edificio todavia esta en escala
+        # 0,001 y el cartel, que va colgado, aparece aplastado contra el piso.
+        # En el video dura 1/24 de segundo, pero arrastrando la barra de tiempo
+        # se cae justo ahi y se ve el logo tirado en el pasto.
+        keyframe_visible_from(obj, frame_in + (reveal_delay(grow) if part else 0))
         if frame_end:
             set_key_interpolation("CONSTANT")
             for prop in ("hide_viewport", "hide_render"):

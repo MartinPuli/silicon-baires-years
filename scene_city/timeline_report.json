@@ -667,8 +667,8 @@
   "camera": {
     "congelada_en_frame": 1,
     "location": [
-      949.2,
-      769.4,
+      951.3,
+      767.3,
       732.1
     ],
     "rotation_deg": [
@@ -677,7 +677,7 @@
       135.0
     ],
     "ortho_scale": 470.0,
-    "ciudad_ancho_m": 518.4,
+    "ciudad_ancho_m": 512.4,
     "ciudad_alto_m": 157.4,
     "keyframes": 0,
     "nota": "Se limpio la animacion del objeto Y la del dato de camara (upstream anima ortho_scale de 306 a 170)."
