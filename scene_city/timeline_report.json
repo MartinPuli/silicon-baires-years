@@ -6,7 +6,8 @@
   "frames_per_year": 19,
   "fps": 24,
   "warnings": [
-    "5 entradas del manifiesto no tienen objeto en el .blend"
+    "5 entradas del manifiesto no tienen objeto en el .blend",
+    "1 carteles quedaron sin edificio propio: su 'owner' no matchea ningun sitio de city_buildings.json (son anclajes de fachada). El cartel se anima igual, el edificio no."
   ],
   "frame_end": 608,
   "signs_animated": [
@@ -15,6 +16,13 @@
       "brand": "GLOBANT",
       "year": 2003,
       "frame_in": 153,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_globant_000",
+      "sitio": [
+        -26.0,
+        -167.0
+      ],
       "confidence": "confirmed"
     },
     {
@@ -22,6 +30,13 @@
       "brand": "VERCEL",
       "year": 2015,
       "frame_in": 381,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_vercel_001",
+      "sitio": [
+        -84.25,
+        90.25
+      ],
       "confidence": "reported"
     },
     {
@@ -29,6 +44,13 @@
       "brand": "MERCADO LIBRE",
       "year": 1999,
       "frame_in": 77,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_mercado_libre_002",
+      "sitio": [
+        187.0,
+        -75.0
+      ],
       "confidence": "confirmed"
     },
     {
@@ -36,6 +58,13 @@
       "brand": "UALA",
       "year": 2017,
       "frame_in": 419,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_uala_004",
+      "sitio": [
+        66.25,
+        -231.25
+      ],
       "confidence": "confirmed"
     },
     {
@@ -43,6 +72,13 @@
       "brand": "AUTH0",
       "year": 2013,
       "frame_in": 343,
+      "end_year": 2021,
+      "end_reason": "la compra Okta por US$6.500 M",
+      "edificio": "TL_bld_auth0_005",
+      "sitio": [
+        33.75,
+        -15.25
+      ],
       "confidence": "confirmed"
     },
     {
@@ -50,6 +86,13 @@
       "brand": "SATELLOGIC",
       "year": 2010,
       "frame_in": 286,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_satellogic_006",
+      "sitio": [
+        258.0,
+        -298.25
+      ],
       "confidence": "confirmed"
     },
     {
@@ -57,6 +100,10 @@
       "brand": "DESPEGAR",
       "year": 1999,
       "frame_in": 77,
+      "end_year": 2025,
+      "end_reason": "la compra Prosus por ~US$1.700 M",
+      "edificio": null,
+      "sitio": null,
       "confidence": "confirmed"
     },
     {
@@ -64,6 +111,13 @@
       "brand": "POMELO",
       "year": 2021,
       "frame_in": 495,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_pomelo_009",
+      "sitio": [
+        -84.25,
+        -2.0
+      ],
       "confidence": "reported"
     },
     {
@@ -71,6 +125,13 @@
       "brand": "TECHNISYS",
       "year": 1995,
       "frame_in": 1,
+      "end_year": 2022,
+      "end_reason": "la compra SoFi por US$1.100 M",
+      "edificio": "TL_bld_technisys_010",
+      "sitio": [
+        -113.75,
+        -2.0
+      ],
       "confidence": "reported"
     },
     {
@@ -78,6 +139,13 @@
       "brand": "ALEPH",
       "year": 2005,
       "frame_in": 191,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_aleph_011",
+      "sitio": [
+        -39.25,
+        -75.0
+      ],
       "confidence": "reported"
     },
     {
@@ -85,6 +153,13 @@
       "brand": "TIENDANUBE",
       "year": 2011,
       "frame_in": 305,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_tiendanube_018",
+      "sitio": [
+        172.25,
+        -167.0
+      ],
       "confidence": "conflicting_sources"
     },
     {
@@ -92,6 +167,13 @@
       "brand": "AEROLAB",
       "year": 2012,
       "frame_in": 324,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_aerolab_020",
+      "sitio": [
+        33.75,
+        11.25
+      ],
       "confidence": "reported"
     },
     {
@@ -99,6 +181,13 @@
       "brand": "BIOCERES",
       "year": 2001,
       "frame_in": 115,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_bioceres_021",
+      "sitio": [
+        201.75,
+        -313.0
+      ],
       "confidence": "confirmed"
     },
     {
@@ -106,6 +195,13 @@
       "brand": "OLX",
       "year": 2006,
       "frame_in": 210,
+      "end_year": 2010,
+      "end_reason": "Naspers toma el control",
+      "edificio": "TL_bld_olx_022",
+      "sitio": [
+        245.75,
+        -243.0
+      ],
       "confidence": "confirmed"
     },
     {
@@ -113,6 +209,13 @@
       "brand": "LEMON",
       "year": 2019,
       "frame_in": 457,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_lemon_023",
+      "sitio": [
+        172.25,
+        -313.0
+      ],
       "confidence": "reported"
     },
     {
@@ -120,6 +223,13 @@
       "brand": "MURAL",
       "year": 2011,
       "frame_in": 305,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_mural_057",
+      "sitio": [
+        33.75,
+        -254.75
+      ],
       "confidence": "reported"
     },
     {
@@ -127,6 +237,13 @@
       "brand": "ETERMAX",
       "year": 2009,
       "frame_in": 267,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_etermax_058",
+      "sitio": [
+        33.75,
+        153.0
+      ],
       "confidence": "confirmed"
     },
     {
@@ -134,6 +251,13 @@
       "brand": "DIGITAL HOUSE",
       "year": 2016,
       "frame_in": 400,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_digital_house_059",
+      "sitio": [
+        66.25,
+        153.0
+      ],
       "confidence": "reported"
     },
     {
@@ -141,6 +265,13 @@
       "brand": "BRUBANK",
       "year": 2017,
       "frame_in": 419,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_brubank_061",
+      "sitio": [
+        172.25,
+        74.0
+      ],
       "confidence": "reported"
     },
     {
@@ -148,6 +279,13 @@
       "brand": "RIPIO",
       "year": 2013,
       "frame_in": 343,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_ripio_069",
+      "sitio": [
+        333.0,
+        -89.75
+      ],
       "confidence": "reported"
     },
     {
@@ -155,6 +293,13 @@
       "brand": "OLX",
       "year": 2006,
       "frame_in": 210,
+      "end_year": 2010,
+      "end_reason": "Naspers toma el control",
+      "edificio": "TL_bld_olx_070",
+      "sitio": [
+        333.0,
+        -60.25
+      ],
       "confidence": "confirmed"
     },
     {
@@ -162,9 +307,17 @@
       "brand": "CODERHOUSE",
       "year": 2014,
       "frame_in": 362,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_coderhouse_097",
+      "sitio": [
+        201.75,
+        -2.0
+      ],
       "confidence": "reported"
     }
   ],
+  "edificios_animados": 21,
   "signs_sin_ano": [
     "ANDA",
     "ARROYO",

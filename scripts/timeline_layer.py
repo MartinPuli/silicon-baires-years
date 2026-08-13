@@ -188,18 +188,140 @@ def freeze_camera(scene, report, subjects):
     return cam
 
 
-def animate_signs(root, scene, report):
-    """Cada cartel con ano citable arranca apagado y se prende en su ano."""
+def site_index(root):
+    """Los 126 sitios de upstream, indexados por su coordenada.
+
+    city_buildings.json trae, por cada edificio, su punto 'at', su altura 'top'
+    y los rectangulos 'wings' que lo componen. El campo 'owner' de cada cartel
+    es exactamente ese 'at', asi que la marca se puede atar a su edificio sin
+    adivinar nada.
+    """
+    with open(os.path.join(root, "upstream", "renders", "city_buildings.json"),
+              encoding="utf-8") as fh:
+        return json.load(fh)["sites"]
+
+
+def site_for_owner(sites, owner):
+    """Encuentra el sitio al que pertenece el 'owner' de un cartel.
+
+    NO se puede matchear por igualdad: el 'owner' del cartel viene redondeado
+    (-26.0, -167.0) y el 'at' del sitio cae en la grilla con decimales
+    (-351.75, -327.75). Se busca el sitio cuyo rectangulo contiene el punto, y
+    si ninguno lo contiene, el mas cercano dentro de un radio corto.
+    """
+    ox, oy = owner
+    best, best_d = None, 1e18
+    for site in sites:
+        for wx, wy, ww, wd in site["wings"]:
+            if (abs(ox - wx) <= ww * 0.5 + 1.0
+                    and abs(oy - wy) <= wd * 0.5 + 1.0):
+                return site
+        dx, dy = ox - site["at"][0], oy - site["at"][1]
+        d = dx * dx + dy * dy
+        if d < best_d:
+            best, best_d = site, d
+    return best if best_d <= 30.0 ** 2 else None
+
+
+def site_rects(site):
+    return [(w[0] - w[2] * 0.5 - 0.6, w[0] + w[2] * 0.5 + 0.6,
+             w[1] - w[3] * 0.5 - 0.6, w[1] + w[3] * 0.5 + 0.6)
+            for w in site["wings"]]
+
+
+def split_buildings(city, targets, collection):
+    """Separa del mesh unico de la ciudad los edificios que hay que animar.
+
+    upstream une TODA la ciudad en un solo objeto llamado 'buildings', asi que
+    no hay nada que escalar por edificio. Se hace con bmesh y NO con
+    bpy.ops.mesh.separate: en background el operador depende del contexto y del
+    objeto activo, y en una tanda de veintipico separaciones deja de encontrar
+    geometria despues de la primera.
+
+    Cada parte nace con su origen en el piso del sitio. Si el origen queda en
+    el centro del volumen, escalar en Z hunde media torre bajo tierra en vez de
+    hacerla crecer desde el suelo.
+
+    `targets` es [(clave, site)]. Devuelve {clave: objeto}.
+    """
+    import bmesh
+
+    bm = bmesh.new()
+    bm.from_mesh(city.data)
+    bm.faces.ensure_lookup_table()
+
+    boxes = [(key, site, site_rects(site), float(site["top"]) + 2.0)
+             for key, site in targets]
+    claimed = {}
+    for face in bm.faces:
+        center = face.calc_center_median()
+        for key, site, rects, top in boxes:
+            if center.z > top:
+                continue
+            if any(x0 <= center.x <= x1 and y0 <= center.y <= y1
+                   for x0, x1, y0, y1 in rects):
+                claimed.setdefault(key, []).append(face)
+                break
+
+    made = {}
+    materials = list(city.data.materials)
+    for key, site in targets:
+        faces = claimed.get(key)
+        if not faces or len(faces) < 4:
+            continue
+        base = Vector((site["at"][0], site["at"][1], 0.0))
+        part_bm = bmesh.new()
+        vmap = {}
+        for face in faces:
+            verts = []
+            for vert in face.verts:
+                if vert not in vmap:
+                    vmap[vert] = part_bm.verts.new(vert.co - base)
+                verts.append(vmap[vert])
+            try:
+                new_face = part_bm.faces.new(verts)
+            except ValueError:
+                continue          # cara duplicada: la geometria unida las tiene
+            new_face.material_index = face.material_index
+            new_face.smooth = face.smooth
+        mesh = bpy.data.meshes.new(TAG + "bld_" + key)
+        part_bm.to_mesh(mesh)
+        part_bm.free()
+        for material in materials:
+            mesh.materials.append(material)
+        obj = bpy.data.objects.new(TAG + "bld_" + key, mesh)
+        obj.location = base
+        collection.objects.link(obj)
+        made[key] = obj
+
+    bmesh.ops.delete(
+        bm, geom=[f for group in claimed.values() for f in group],
+        context="FACES")
+    bm.to_mesh(city.data)
+    bm.free()
+    city.data.update()
+    return made
+
+
+def animate_signs(root, scene, report, collection):
+    """Cada empresa levanta su edificio en su ano y lo baja cuando deja de ser
+    independiente. El cartel se prende cuando el edificio termino de crecer."""
     with open(os.path.join(root, "data", "brand_years.json"),
               encoding="utf-8") as fh:
         table = json.load(fh)["years"]
     with open(os.path.join(root, "upstream", "renders", "city_signs.json"),
               encoding="utf-8") as fh:
         manifest = json.load(fh)
+    sites = site_index(root)
+    city = bpy.data.objects.get("buildings")
 
-    by_year = {}
+    grow = int(FRAMES_PER_YEAR * 0.7)
+    by_year, end_by_year = {}, {}
     animated, missing_objects, sin_ano, objects = [], [], set(), []
+    built = 0
 
+    # Primera pasada: que carteles tienen ano y a que sitio pertenecen.
+    plan, targets = [], []
     for entry in manifest:
         obj = bpy.data.objects.get(entry["name"])
         brand = entry["text"]
@@ -212,29 +334,81 @@ def animate_signs(root, scene, report):
             # fotograma, exactamente como la dejo upstream.
             sin_ano.add(brand)
             continue
-        frame_in = year_to_frame(int(info["year"]))
-        keyframe_visible_from(obj, frame_in)
-        by_year.setdefault(int(info["year"]), set()).add(brand)
+        key = "%s_%s" % (brand.replace(" ", "_").lower(),
+                         entry["name"].split(".")[-1])
+        site = site_for_owner(sites, entry["owner"])
+        plan.append((entry, obj, info, key, site))
+        if site is not None:
+            targets.append((key, site))
+
+    # Segunda: una sola pasada de bmesh para separarlos a todos.
+    parts = split_buildings(city, targets, collection) if (
+        city is not None and targets) else {}
+
+    for entry, obj, info, key, site in plan:
+        brand = entry["text"]
+        year = int(info["year"])
+        frame_in = year_to_frame(year)
+        end_year = info.get("end_year")
+        frame_end = year_to_frame(int(end_year)) if end_year else None
+        part = parts.get(key)
+
+        if part is not None:
+            built += 1
+            set_key_interpolation("BEZIER")
+            part.scale = (1.0, 1.0, 0.001)
+            part.keyframe_insert("scale", index=2, frame=1)
+            part.keyframe_insert("scale", index=2, frame=frame_in)
+            part.scale = (1.0, 1.0, 1.0)
+            part.keyframe_insert("scale", index=2, frame=frame_in + grow)
+            if frame_end:
+                part.keyframe_insert("scale", index=2, frame=frame_end)
+                part.scale = (1.0, 1.0, 0.001)
+                part.keyframe_insert("scale", index=2, frame=frame_end + grow)
+
+        # El cartel entra cuando el edificio termino de subir, y se va cuando
+        # empieza a bajar.
+        keyframe_visible_from(obj, frame_in + (grow if part else 0))
+        if frame_end:
+            set_key_interpolation("CONSTANT")
+            for prop in ("hide_viewport", "hide_render"):
+                setattr(obj, prop, True)
+                obj.keyframe_insert(prop, frame=frame_end)
+
+        by_year.setdefault(year, set()).add(brand)
+        if end_year:
+            end_by_year.setdefault(int(end_year), set()).add(brand)
         objects.append(obj)
         animated.append({
             "sign": entry["name"],
             "brand": brand,
-            "year": int(info["year"]),
+            "year": year,
             "frame_in": frame_in,
+            "end_year": end_year,
+            "end_reason": info.get("end_reason"),
+            "edificio": part.name if part else None,
+            "sitio": [round(v, 2) for v in site["at"]] if site else None,
             "confidence": info.get("confidence"),
         })
 
     report["signs_animated"] = animated
+    report["edificios_animados"] = built
     report["signs_sin_ano"] = sorted(sin_ano)
     report["objetos_del_manifiesto_ausentes"] = missing_objects
     if missing_objects:
         report["warnings"].append(
             "%d entradas del manifiesto no tienen objeto en el .blend"
             % len(missing_objects))
-    return by_year, table, objects
+    if built < len(animated):
+        report["warnings"].append(
+            "%d carteles quedaron sin edificio propio: su 'owner' no matchea "
+            "ningun sitio de city_buildings.json (son anclajes de fachada). El "
+            "cartel se anima igual, el edificio no."
+            % (len(animated) - built))
+    return by_year, end_by_year, table, objects
 
 
-def build_hud(cam, scene, by_year, table, collection, report):
+def build_hud(cam, scene, by_year, end_by_year, table, collection, report):
     """Ano y titulares, pegados a la camara. Como la camara es fija, quedan
     clavados en el cuadro."""
     half_w = cam.data.ortho_scale * 0.5
@@ -283,6 +457,7 @@ def build_hud(cam, scene, by_year, table, collection, report):
         keyframe_visible_range(year_obj, frame_in, frame_out)
 
         lines = ["se funda " + b for b in sorted(by_year.get(year, ()))]
+        lines += ["cae " + b for b in sorted(end_by_year.get(year, ()))]
         lines += sorted(hitos.get(year, ()))
         if lines:
             line = text("hud_line_%d" % year, "\n".join(lines[:4]),
@@ -324,7 +499,10 @@ def main():
 
     # Los carteles primero: el encuadre se decide a partir de donde caen los
     # que tienen ano, asi que hay que saber cuales son antes de tocar la camara.
-    by_year, table, sign_objects = animate_signs(root, scene, report)
+    bld_coll = bpy.data.collections.new(TAG + "BUILDINGS")
+    scene.collection.children.link(bld_coll)
+    by_year, end_by_year, table, sign_objects = animate_signs(
+        root, scene, report, bld_coll)
     if not sign_objects:
         raise SystemExit("ningun cartel del manifiesto tiene ano en "
                          "data/brand_years.json: no hay linea de tiempo")
@@ -332,7 +510,7 @@ def main():
 
     hud_coll = bpy.data.collections.new(TAG + "HUD")
     scene.collection.children.link(hud_coll)
-    build_hud(cam, scene, by_year, table, hud_coll, report)
+    build_hud(cam, scene, by_year, end_by_year, table, hud_coll, report)
 
     out_dir = os.path.join(root, "scene_city")
     os.makedirs(out_dir, exist_ok=True)
