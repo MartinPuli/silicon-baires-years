@@ -31,7 +31,7 @@ from mathutils import Matrix, Vector
 
 YEAR_START = 1995     # Technisys, la mas vieja de la tabla con ano citable
 YEAR_END = 2026
-FRAMES_PER_YEAR = 19  # 32 anos * 19 = 608, y el .blend de upstream llega a 624
+FRAMES_PER_YEAR = 9   # 32 anos * 9 = 288 fotogramas = 12 s a 24 fps
 # Cuanto de un ano tarda un edificio en levantarse. Bajo a proposito: a 0,7 el
 # ano entero era una obra en curso y la pieza se sentia lenta.
 GROW_SHARE = 0.45
@@ -43,15 +43,17 @@ TAG = "TL_"
 # abierto) y se recentra sobre la ciudad, porque el encuadre final lo ocupan
 # las letras rojas de BUENOS AIRES y aca lo que hay que ver son los carteles.
 FREEZE_FRAME = 1
-MARGIN = 1.22         # aire alrededor de la caja de los carteles con ano
+MARGIN = 1.03         # aire alrededor de la caja de la ciudad
+# 12 segundos a 24 fps. Los 32 anos entran justos a 9 fotogramas cada uno.
+TOTAL_FRAMES = 288
 # Topes del encuadre. Abajo, el plano de apertura de upstream (306), que es lo
 # mas cerrado que se puede estar y seguir viendo varias marcas. Arriba, el
 # punto donde la ciudad empieza a ser una isla en el fondo y los logos dejan
 # de leerse.
+# La ciudad entera mide unos 1.070 m sobre el eje horizontal de esta camara.
+# Los topes se abren para que entre completa: mostrarla toda es el pedido.
 ORTHO_MIN = 306.0
-# A 620 los logos de las empresas son manchitas de tres pixeles. Cerrando a
-# 470 se leen, al precio de que algun cartel de los bordes quede afuera.
-ORTHO_MAX = 470.0
+ORTHO_MAX = 1250.0
 
 
 def argv_after_ddash():
@@ -124,7 +126,7 @@ def keyframe_visible_range(obj, frame_in, frame_out):
 # ---------------------------------------------------------------------------
 
 
-def extent_in_camera_plane(cam, objects):
+def extent_in_camera_plane(cam, objects, trim=0.08):
     """Caja de esos objetos medida en el plano de la camara, no en el mundo.
 
     Un bounding box alineado a los ejes del mundo no dice nada sobre cuanto
@@ -144,8 +146,10 @@ def extent_in_camera_plane(cam, objects):
     # extremo, asi el cuadro lo decide el grueso de las marcas.
     def band(values):
         values = sorted(values)
-        low = values[int(len(values) * 0.08)]
-        high = values[min(len(values) - 1, int(len(values) * 0.92))]
+        if trim <= 0.0:
+            return values[0], values[-1]      # la ciudad entera, sin recortar
+        low = values[int(len(values) * trim)]
+        high = values[min(len(values) - 1, int(len(values) * (1.0 - trim)))]
         return low, high
 
     u0, u1 = band(us)
@@ -172,11 +176,17 @@ def freeze_camera(scene, report, subjects):
     cam.rotation_euler = rotation
     cam.location = location
 
-    # El encuadre se calcula sobre los carteles QUE TIENEN ANO, no sobre la
-    # ciudad entera: encuadrar la ciudad completa la deja como una isla chica
-    # en medio del fondo y no se lee ni un logo, que es justo lo que la pieza
-    # tiene para mostrar.
-    right, up, u0, u1, v0, v1 = extent_in_camera_plane(cam, subjects)
+    # Encuadre sobre la ciudad ENTERA: es lo que la pieza tiene que mostrar,
+    # porque lo que cuenta es como se llena. Los logos quedan chicos; el precio
+    # esta aceptado.
+    ciudad = []
+    for nombre in ("BUILDINGS", "SIGNS", "LANDMARKS", "TITLE"):
+        coll = bpy.data.collections.get(nombre)
+        if coll:
+            ciudad += [o for o in coll.all_objects if o.type == "MESH"]
+    ciudad += [o for o in bpy.data.objects if o.name.startswith("TL_bld_")]
+    right, up, u0, u1, v0, v1 = extent_in_camera_plane(
+        cam, ciudad or subjects, trim=0.0)
     width, height = u1 - u0, v1 - v0
     aspect = scene.render.resolution_x / scene.render.resolution_y
     # ortho_scale es la dimension MAYOR del encuadre, asi que hay que cubrir
@@ -740,12 +750,15 @@ def animate_signs(root, scene, report, collection):
             # esta terminado.
             sin_ano.add(brand)
             site = site_for_owner(sites, entry["owner"])
-            if site is not None:
-                keyframe_visible_from(
-                    obj,
-                    year_to_frame(fabric_year(site["at"]))
-                    + int(FRAMES_PER_YEAR * 0.6) + 1)
-                huerfanos += 1
+            # Si no matchea ningun sitio igual se le da un ano: es preferible a
+            # dejarlo prendido desde 1995 sobre un lote pelado. fabric_year es
+            # deterministico sobre cualquier coordenada.
+            anchor_xy = site["at"] if site else entry["owner"]
+            keyframe_visible_from(
+                obj,
+                year_to_frame(fabric_year(anchor_xy))
+                + int(FRAMES_PER_YEAR * 0.6) + 1)
+            huerfanos += 1
             continue
         key = "%s_%s" % (brand.replace(" ", "_").lower(),
                          entry["name"].split(".")[-1])
@@ -912,7 +925,10 @@ def build_hud(cam, scene, by_year, end_by_year, table, collection, report):
 
     for year in range(YEAR_START, YEAR_END + 1):
         frame_in = year_to_frame(year)
-        frame_out = frame_in + FRAMES_PER_YEAR
+        # El ultimo ano se estira hasta el final: la pieza dura mas que el
+        # ultimo ano y si no el contador se apaga y quedan segundos sin fecha.
+        frame_out = (scene.frame_end + 1 if year == YEAR_END
+                     else frame_in + FRAMES_PER_YEAR)
         year_obj = text("hud_year_%d" % year, str(year),
                         -half_w * 0.90, half_h * 0.78, half_h * 0.20, year_mat)
         keyframe_visible_range(year_obj, frame_in, frame_out)
@@ -951,7 +967,8 @@ def main():
     }
 
     scene.frame_start = 1
-    scene.frame_end = year_to_frame(YEAR_END) + FRAMES_PER_YEAR - 1
+    scene.frame_end = max(TOTAL_FRAMES,
+                          year_to_frame(YEAR_END) + FRAMES_PER_YEAR - 1)
     report["frame_end"] = scene.frame_end
     if scene.frame_end > 624:
         report["warnings"].append(
