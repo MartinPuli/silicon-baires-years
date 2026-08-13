@@ -648,19 +648,12 @@ def animate_closed(planned, parts, collection, by_year, end_by_year, report):
         sign.data.materials.append(emission_material(
             "cerro_%s" % empresa["id"], (1.0, 0.30, 0.22), 4.0))
         collection.objects.link(sign)
-        # El cartel sube Y baja con su edificio. Dejarlo clavado a la altura
-        # final lo deja flotando en el aire mientras la obra sube, que es
-        # exactamente lo que se veia mal.
+        # Se cuelga del edificio, igual que los carteles de las empresas.
+        # Keyframear su altura en paralelo lo dejaba flotando sobre un terreno
+        # vacio mientras la obra subia.
         if part is not None:
-            set_key_interpolation("BEZIER")
-            sign.location.z = sign_z * 0.001
-            sign.keyframe_insert("location", index=2, frame=frame_in)
-            sign.location.z = sign_z
-            sign.keyframe_insert("location", index=2, frame=frame_in + grow)
-            sign.keyframe_insert("location", index=2, frame=frame_out)
-            sign.location.z = sign_z * 0.001
-            sign.keyframe_insert("location", index=2, frame=frame_out + grow)
-            sign.location.z = sign_z
+            sign.parent = part
+            sign.matrix_parent_inverse = part.matrix_world.inverted()
         keyframe_visible_range(sign, frame_in, frame_out)
 
         by_year.setdefault(founded, set()).add(empresa["name"])
@@ -734,32 +727,36 @@ def animate_signs(root, scene, report, collection):
         if part is not None:
             built += 1
             steps = growth_steps(year, info)
-            # El cartel viaja con su edificio. El edificio escala en Z desde el
-            # piso, asi que un punto que estaba a z sube a z*escala: alcanza con
-            # keyframear la altura del cartel con el mismo factor, en los mismos
-            # fotogramas. Parentarlo lo estiraria junto con la torre.
-            sign_z = obj.location.z
+            # El cartel se cuelga del edificio y hereda su escala.
+            #
+            # Antes de esto probamos keyframear la altura del cartel EN PARALELO
+            # a la del edificio: primero con obj.location.z * escala, despues
+            # con el desplazamiento del punto de apoyo tomado del campo `z` del
+            # manifiesto. Ninguna de las dos prendio. Medido sobre el depsgraph
+            # evaluado, 29 de 30 carteles no se movian un centimetro entre el
+            # primer fotograma y el ultimo.
+            #
+            # Emparentar no depende de que dos animaciones separadas coincidan:
+            # hay una sola, la del edificio, y el cartel va colgado. El precio
+            # es que el cartel se achata mientras la obra sube; en reposo no se
+            # deforma, porque la escala vuelve a 1, y un cartel achatado sobre
+            # un edificio a medio construir es exactamente lo que uno espera
+            # ver.
+            obj.parent = part
+            obj.matrix_parent_inverse = part.matrix_world.inverted()
 
             set_key_interpolation("BEZIER")
             part.scale = (1.0, 1.0, 0.001)
             part.keyframe_insert("scale", index=2, frame=1)
             part.keyframe_insert("scale", index=2, frame=frame_in)
-            obj.location.z = sign_z * 0.001
-            obj.keyframe_insert("location", index=2, frame=frame_in)
             for step_year, height in steps:
-                frame = year_to_frame(step_year) + grow
                 part.scale = (1.0, 1.0, height)
-                part.keyframe_insert("scale", index=2, frame=frame)
-                obj.location.z = sign_z * height
-                obj.keyframe_insert("location", index=2, frame=frame)
+                part.keyframe_insert(
+                    "scale", index=2, frame=year_to_frame(step_year) + grow)
             if frame_end:
                 part.keyframe_insert("scale", index=2, frame=frame_end)
-                obj.keyframe_insert("location", index=2, frame=frame_end)
                 part.scale = (1.0, 1.0, 0.001)
-                obj.location.z = sign_z * 0.001
                 part.keyframe_insert("scale", index=2, frame=frame_end + grow)
-                obj.keyframe_insert("location", index=2, frame=frame_end + grow)
-            obj.location.z = sign_z
 
         # El cartel entra con el edificio, no despues: sube con el.
         keyframe_visible_from(obj, frame_in)
