@@ -55,6 +55,11 @@ TOTAL_FRAMES = 288
 ORTHO_MIN = 306.0
 ORTHO_MAX = 1250.0
 
+# Se activa con --vertical: 1080x1920 para celular. No es un recorte del
+# apaisado, es otro encuadre — en 9:16 la ciudad entera no entra sin quedar
+# ilegible, asi que se cierra sobre el nucleo.
+VERTICAL = False
+
 
 def argv_after_ddash():
     return sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
@@ -191,19 +196,44 @@ def freeze_camera(scene, report, subjects):
     # Encuadre sobre la ciudad ENTERA: es lo que la pieza tiene que mostrar,
     # porque lo que cuenta es como se llena. Los logos quedan chicos; el precio
     # esta aceptado.
-    ciudad = []
-    for nombre in ("BUILDINGS", "SIGNS", "LANDMARKS", "TITLE"):
-        coll = bpy.data.collections.get(nombre)
-        if coll:
-            ciudad += [o for o in coll.all_objects if o.type == "MESH"]
-    ciudad += [o for o in bpy.data.objects if o.name.startswith("TL_bld_")]
+    if VERTICAL:
+        # En 9:16 se llena el ALTO con la ciudad y se dejan recortar los
+        # costados. Encajarla entera dejaba media pantalla de suelo vacio
+        # arriba y abajo, y la ciudad chiquita en el medio: lo peor de los dos
+        # mundos en un telefono.
+        objetivos, recorte = [], 0.0
+        for nombre in ("BUILDINGS", "SIGNS", "LANDMARKS", "TITLE"):
+            coll = bpy.data.collections.get(nombre)
+            if coll:
+                objetivos += [o for o in coll.all_objects if o.type == "MESH"]
+        objetivos += [o for o in bpy.data.objects
+                      if o.name.startswith("TL_bld_")]
+    else:
+        objetivos = []
+        for nombre in ("BUILDINGS", "SIGNS", "LANDMARKS", "TITLE"):
+            coll = bpy.data.collections.get(nombre)
+            if coll:
+                objetivos += [o for o in coll.all_objects if o.type == "MESH"]
+        objetivos += [o for o in bpy.data.objects
+                      if o.name.startswith("TL_bld_")]
+        recorte = 0.0
     right, up, u0, u1, v0, v1 = extent_in_camera_plane(
-        cam, ciudad or subjects, trim=0.0)
+        cam, objetivos or subjects, trim=recorte)
     width, height = u1 - u0, v1 - v0
     aspect = scene.render.resolution_x / scene.render.resolution_y
     # ortho_scale es la dimension MAYOR del encuadre, asi que hay que cubrir
     # tanto el ancho como la altura convertida a ancho equivalente.
-    fitted = max(width, height * aspect) * MARGIN
+    # ortho_scale cubre SIEMPRE el lado mayor del render. En apaisado ese lado
+    # es el ancho; en vertical es el alto. Usar la formula del apaisado en un
+    # 9:16 deja la ciudad cortada por los costados.
+    if scene.render.resolution_x >= scene.render.resolution_y:
+        fitted = max(width, height * aspect)
+    else:
+        # Vertical: se ajusta SOLO al alto. Meter tambien el ancho
+        # (width / aspect) alejaba la camara hasta 938 y dejaba la ciudad
+        # nadando en suelo vacio.
+        fitted = height
+    fitted *= MARGIN
     cam.data.ortho_scale = max(ORTHO_MIN, min(ORTHO_MAX, fitted))
 
     # Recentrar: correr la camara sobre su propio plano hasta que el centro de
@@ -959,8 +989,14 @@ def extend_ground(cam, scene, collection, report):
 def build_hud(cam, scene, by_year, end_by_year, table, collection, report):
     """Ano y titulares, pegados a la camara. Como la camara es fija, quedan
     clavados en el cuadro."""
-    half_w = cam.data.ortho_scale * 0.5
-    half_h = half_w * scene.render.resolution_y / scene.render.resolution_x
+    # Igual que el encuadre: ortho_scale es el lado mayor del render.
+    res_x, res_y = scene.render.resolution_x, scene.render.resolution_y
+    if res_x >= res_y:
+        half_w = cam.data.ortho_scale * 0.5
+        half_h = half_w * res_y / res_x
+    else:
+        half_h = cam.data.ortho_scale * 0.5
+        half_w = half_h * res_x / res_y
     # Justo delante del plano de recorte, no a mitad de la ciudad: a 600 el
     # texto quedaba DENTRO del casco urbano y las torres lo tapaban.
     cam.data.clip_start = min(cam.data.clip_start, 0.5)
@@ -1016,8 +1052,12 @@ def build_hud(cam, scene, by_year, end_by_year, table, collection, report):
 
 
 def main():
+    global VERTICAL
     root = repo_root()
+    VERTICAL = "--vertical" in argv_after_ddash()
     scene = bpy.context.scene
+    if VERTICAL:
+        scene.render.resolution_x, scene.render.resolution_y = 1080, 1920
     purge_previous()
 
     report = {
@@ -1069,10 +1109,12 @@ def main():
 
     out_dir = os.path.join(root, "scene_city")
     os.makedirs(out_dir, exist_ok=True)
-    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir,
-                                                      "city_timeline.blend"))
-    with open(os.path.join(out_dir, "timeline_report.json"), "w",
-              encoding="utf-8") as fh:
+    nombre = "city_timeline_vertical.blend" if VERTICAL else "city_timeline.blend"
+    report["orientacion"] = "vertical 1080x1920" if VERTICAL else "apaisado 1920x1080"
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, nombre))
+    informe = ("timeline_report_vertical.json" if VERTICAL
+               else "timeline_report.json")
+    with open(os.path.join(out_dir, informe), "w", encoding="utf-8") as fh:
         json.dump(report, fh, indent=2, ensure_ascii=False)
 
     print("TIMELINE OK:", json.dumps({
