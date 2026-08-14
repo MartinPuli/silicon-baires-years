@@ -45,7 +45,7 @@
       ]
     }
   ],
-  "tejido_animado": 85,
+  "tejido_animado": 84,
   "tejido_nota": "Puesta en escena, no dato: los edificios que no son de ninguna empresa se reparten a lo largo del periodo con un sesgo hacia los anos tardios, para que la ciudad arranque casi vacia. El reparto es determinista, asi que siempre se construye en el mismo orden.",
   "landmarks": [
     {
@@ -508,6 +508,20 @@
       "confidence": "reported"
     },
     {
+      "sign": "Sign.062",
+      "brand": "MODO",
+      "year": 2020,
+      "frame_in": 226,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_modo_062",
+      "sitio": [
+        187.0,
+        138.25
+      ],
+      "confidence": "user_provided"
+    },
+    {
       "sign": "Sign.069",
       "brand": "RIPIO",
       "year": 2013,
@@ -620,7 +634,7 @@
       "confidence": "user_provided"
     }
   ],
-  "edificios_animados": 38,
+  "edificios_animados": 39,
   "signs_sin_ano": [
     "ANDA",
     "ARROYO",
@@ -635,7 +649,6 @@
     "LINCE",
     "LUMA",
     "MATE",
-    "MODO",
     "NODO",
     "NUBE",
     "OMBU",
@@ -657,7 +670,7 @@
     "YERBA",
     "ZONDA"
   ],
-  "signs_sin_ano_atados_a_su_edificio": 56,
+  "signs_sin_ano_atados_a_su_edificio": 55,
   "objetos_del_manifiesto_ausentes": [
     "Sign.013",
     "Sign.053",
@@ -693,5 +706,6 @@
   "hud": {
     "anos": 32,
     "titulares": 25
-  }
+  },
+  "orientacion": "apaisado 1920x1080"
 }

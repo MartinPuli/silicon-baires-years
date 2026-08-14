@@ -76,6 +76,22 @@ def repo_root():
     return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
+def upstream_path(root, *partes):
+    """Los archivos de la ciudad, este script viva donde viva.
+
+    En el repo de la capa, upstream se clona en `upstream/`. Dentro del repo de
+    silicon-baires, en cambio, la carpeta cuelga del raiz y los renders quedan
+    un nivel arriba. Se prueban las dos y listo, en vez de exigir una estructura.
+    """
+    candidatos = (os.path.join(root, "upstream", "renders", *partes),
+                  os.path.join(root, "..", "renders", *partes),
+                  os.path.join(root, "renders", *partes))
+    for ruta in candidatos:
+        if os.path.exists(ruta):
+            return ruta
+    return candidatos[0]
+
+
 def year_to_frame(year):
     return int(round((year - YEAR_START) * FRAMES_PER_YEAR)) + 1
 
@@ -410,7 +426,7 @@ def site_index(root):
     es exactamente ese 'at', asi que la marca se puede atar a su edificio sin
     adivinar nada.
     """
-    with open(os.path.join(root, "upstream", "renders", "city_buildings.json"),
+    with open(upstream_path(root, "city_buildings.json"),
               encoding="utf-8") as fh:
         return json.load(fh)["sites"]
 
@@ -833,8 +849,7 @@ def animate_signs(root, scene, report, collection):
     with open(os.path.join(root, "data", "brand_years.json"),
               encoding="utf-8") as fh:
         table = json.load(fh)["years"]
-    with open(os.path.join(root, "upstream", "renders", "city_signs.json"),
-              encoding="utf-8") as fh:
+    with open(upstream_path(root, "city_signs.json"), encoding="utf-8") as fh:
         manifest = json.load(fh)
     sites = site_index(root)
     city = bpy.data.objects.get("buildings")
