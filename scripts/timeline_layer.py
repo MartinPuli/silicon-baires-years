@@ -59,6 +59,10 @@ ORTHO_MAX = 1250.0
 # apaisado, es otro encuadre — en 9:16 la ciudad entera no entra sin quedar
 # ilegible, asi que se cierra sobre el nucleo.
 VERTICAL = False
+# Encuadre del recorrido vertical: cerrado para que se lean los logos en un
+# telefono, y abriendo al final para mostrar la ciudad ya llena.
+VERTICAL_ORTHO = 330.0
+VERTICAL_ORTHO_FINAL = 620.0
 
 
 def argv_after_ddash():
@@ -174,6 +178,72 @@ def extent_in_camera_plane(cam, objects, trim=0.08):
     return right, up, u0, u1, v0, v1
 
 
+cam_axes = []          # [right, up] de la camara, lo llena freeze_camera
+
+
+def animate_camera_tour(cam, scene, animated, report):
+    """Solo en vertical: la camara recorre la ciudad siguiendo a las empresas.
+
+    En apaisado la camara no se mueve — esa es la pieza. En un telefono el plano
+    general no funciona: la ciudad entera en 9:16 queda ilegible. Asi que en
+    vertical la camara viaja, pero NO por un recorrido inventado: va a donde
+    esta pasando algo. Cada parada es el centro de los edificios que se levantan
+    en ese tramo de anos, y llega justo cuando empiezan a construirse.
+    """
+    if not cam_axes:
+        return
+    right, up = cam_axes
+
+    porano = {}
+    for ficha in animated:
+        obj = bpy.data.objects.get(ficha["edificio"] or "")
+        if obj is not None:
+            porano.setdefault(ficha["year"], []).append(obj)
+    if not porano:
+        return
+
+    # Agrupar en tramos: una parada por ano marearia, y hay anos con una sola
+    # empresa. Se juntan anos consecutivos hasta llegar a PARADAS tramos.
+    anos = sorted(porano)
+    paradas = max(4, min(8, len(anos)))
+    tam = max(1, len(anos) // paradas)
+    tramos = [anos[i:i + tam] for i in range(0, len(anos), tam)]
+
+    set_key_interpolation("BEZIER")
+    detalle = []
+    for tramo in tramos:
+        objetos = [o for a in tramo for o in porano[a]]
+        cx = sum(o.location.x for o in objetos) / len(objetos)
+        cy = sum(o.location.y for o in objetos) / len(objetos)
+        centro = Vector((cx, cy, 25.0))
+        frame = year_to_frame(tramo[0]) + int(FRAMES_PER_YEAR * 0.3)
+
+        loc = cam.location.copy()
+        cam.location = (loc
+                        + right * (centro.dot(right) - loc.dot(right))
+                        + up * (centro.dot(up) - loc.dot(up)))
+        cam.keyframe_insert("location", frame=max(1, frame))
+        detalle.append({
+            "frame": max(1, frame),
+            "anos": [tramo[0], tramo[-1]],
+            "empresas": sorted({f["brand"] for f in animated
+                                if f["year"] in tramo}),
+            "centro": [round(cx, 1), round(cy, 1)],
+        })
+
+    # El zoom NO se anima. El HUD del ano va parenteado a la camara y ubicado
+    # en unidades del cuadro: si ortho_scale cambia, el cuadro cambia de tamano
+    # pero el texto no, y el ano se va de pantalla. Se viaja, no se hace zoom.
+    cam.data.ortho_scale = VERTICAL_ORTHO
+
+    report["recorrido_camara"] = detalle
+    report["camera"]["keyframes"] = len(detalle)
+    report["camera"]["nota"] = (
+        "Solo en vertical la camara se mueve, y va a donde se estan "
+        "construyendo los edificios de cada tramo de anos. En apaisado sigue "
+        "sin un solo keyframe.")
+
+
 def freeze_camera(scene, report, subjects):
     """Le saca la animacion a la camara y la deja mirando la ciudad entera.
 
@@ -243,6 +313,7 @@ def freeze_camera(scene, report, subjects):
                     + right * (target_u - location.dot(right))
                     + up * (target_v - location.dot(up)))
 
+    cam_axes[:] = [right, up]
     report["camera"] = {
         "congelada_en_frame": FREEZE_FRAME,
         "location": [round(v, 1) for v in cam.location],
@@ -966,7 +1037,9 @@ def extend_ground(cam, scene, collection, report):
             base_rgb = (r * 0.45, g * 0.45, b * 0.45)
     material = solid_material("asfalto_fondo", base_rgb, roughness=0.92)
 
-    lado = cam.data.ortho_scale * 2.2
+    # En vertical la camara recorre la ciudad, asi que el suelo tiene que
+    # cubrir todo el trayecto y no solo el cuadro de una parada.
+    lado = max(cam.data.ortho_scale * 2.2, 2600.0 if VERTICAL else 0.0)
     bpy.ops.mesh.primitive_plane_add(size=lado, location=(0.0, 0.0, z - 0.05))
     plano = bpy.context.active_object
     plano.name = TAG + "suelo"
@@ -1058,6 +1131,10 @@ def main():
     scene = bpy.context.scene
     if VERTICAL:
         scene.render.resolution_x, scene.render.resolution_y = 1080, 1920
+        # Sin motion blur. Con la camara quieta el desenfoque solo tocaba a los
+        # autos y quedaba bien; moviendo la camara desenfoca la ciudad entera y
+        # el plano queda inmirable.
+        scene.render.use_motion_blur = False
     purge_previous()
 
     report = {
@@ -1104,6 +1181,8 @@ def main():
                         "hito": ["%d: %s" % (int(o["year"]), o["texto"])
                                  for o in obras]}
 
+    if VERTICAL:
+        animate_camera_tour(cam, scene, report["signs_animated"], report)
     extend_ground(cam, scene, bld_coll, report)
     build_hud(cam, scene, by_year, end_by_year, table, hud_coll, report)
 

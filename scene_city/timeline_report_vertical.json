@@ -680,11 +680,155 @@
     "ortho_scale": 538.2,
     "ciudad_ancho_m": 984.1,
     "ciudad_alto_m": 522.5,
-    "keyframes": 0,
-    "nota": "Se limpio la animacion del objeto Y la del dato de camara (upstream anima ortho_scale de 306 a 170)."
+    "keyframes": 8,
+    "nota": "Solo en vertical la camara se mueve, y va a donde se estan construyendo los edificios de cada tramo de anos. En apaisado sigue sin un solo keyframe."
   },
+  "recorrido_camara": [
+    {
+      "frame": 1,
+      "anos": [
+        1905,
+        1995
+      ],
+      "empresas": [
+        "GALICIA",
+        "NARANJA X",
+        "TECHNISYS"
+      ],
+      "centro": [
+        41.6,
+        -6.4
+      ]
+    },
+    {
+      "frame": 39,
+      "anos": [
+        1999,
+        2003
+      ],
+      "empresas": [
+        "BIOCERES",
+        "DESPEGAR",
+        "GLOBANT",
+        "MERCADO LIBRE"
+      ],
+      "centro": [
+        120.9,
+        -185.0
+      ]
+    },
+    {
+      "frame": 84,
+      "anos": [
+        2004,
+        2006
+      ],
+      "empresas": [
+        "ALEPH",
+        "MERCADO PAGO",
+        "OLX"
+      ],
+      "centro": [
+        143.3,
+        -136.3
+      ]
+    },
+    {
+      "frame": 129,
+      "anos": [
+        2009,
+        2011
+      ],
+      "empresas": [
+        "ETERMAX",
+        "MURAL",
+        "SATELLOGIC",
+        "TIENDANUBE"
+      ],
+      "centro": [
+        124.4,
+        -141.8
+      ]
+    },
+    {
+      "frame": 156,
+      "anos": [
+        2012,
+        2014
+      ],
+      "empresas": [
+        "AEROLAB",
+        "AUTH0",
+        "CODERHOUSE",
+        "PAISANOS",
+        "PATMOS",
+        "RIPIO"
+      ],
+      "centro": [
+        75.4,
+        -98.4
+      ]
+    },
+    {
+      "frame": 183,
+      "anos": [
+        2015,
+        2017
+      ],
+      "empresas": [
+        "BRUBANK",
+        "DECENTRALAND",
+        "DIGITAL HOUSE",
+        "OPENZEPPELIN",
+        "UALA",
+        "VERCEL"
+      ],
+      "centro": [
+        3.8,
+        9.0
+      ]
+    },
+    {
+      "frame": 210,
+      "anos": [
+        2018,
+        2020
+      ],
+      "empresas": [
+        "BASEMENT",
+        "COMPLIF",
+        "HUMAND",
+        "LEMON",
+        "REBILL"
+      ],
+      "centro": [
+        107.7,
+        -113.3
+      ]
+    },
+    {
+      "frame": 237,
+      "anos": [
+        2021,
+        2026
+      ],
+      "empresas": [
+        "BELO",
+        "COCOS",
+        "MASLOW",
+        "POMELO",
+        "REVAMOS",
+        "SLA",
+        "TAKENOS"
+      ],
+      "centro": [
+        88.3,
+        -55.4
+      ]
+    }
+  ],
   "suelo_extendido": {
-    "lado_m": 1184.0,
+    "lado_m": 2600.0,
     "z": -0.05,
     "material": "TL_asfalto_fondo",
     "color_derivado_de": "site",
